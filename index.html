@@ -65,7 +65,6 @@
         /* 배경 캔버스 */
         #sky-canvas { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; 
-            /* 배경색 변경: 위쪽 진한 핑크 -> 아래쪽 연한 핑크 */
             background: linear-gradient(to bottom, #ff9ebb 0%, #ffeaf4 100%); 
         }
 
@@ -228,6 +227,14 @@
             width: 80px; height: 25px; background: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255,255,255,0.8);
             box-shadow: 0 2px 5px rgba(0,0,0,0.1); transform: translateX(-50%) rotate(2deg);
         }
+        /* 사진 변경 안내 오버레이 */
+        .polaroid-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.2); 
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.3s; border-radius: 4px;
+        }
+        #polaroid-widget:hover .polaroid-overlay { opacity: 1; }
+
         .polaroid-caption { 
             font-family: 'Paperlogy', sans-serif; text-align: center; margin-top: 15px; 
             color: #666; outline: none; border: none; background: transparent; width: 100%;
@@ -235,7 +242,7 @@
         }
         .polaroid-caption:focus { border-bottom: 1px dashed #FFB7C5; background: #fff0f5; }
 
-        /* 토끼 펫 스타일 */
+        /* 토끼 펫 스타일 - 위치 고정 */
         #desktop-pet {
             position: absolute; bottom: 100px; left: 100px; width: 60px; height: 60px; z-index: 10;
             cursor: pointer; transition: transform 0.2s;
@@ -313,12 +320,13 @@
         <textarea id="heart-memo" placeholder="" oninput="HeartWidget.save(this.value)"></textarea>
     </div>
 
-    <!-- 폴라로이드 위젯 -->
-    <div id="polaroid-widget" onclick="PolaroidApp.refresh()">
+    <!-- 폴라로이드 위젯 (직접 변경 기능 추가) -->
+    <!-- [수정] onclick="PolaroidApp.refresh()" 제거하여 클릭 충돌 방지 -->
+    <div id="polaroid-widget">
         <!-- JS로 내용 채움 -->
     </div>
 
-    <!-- 토끼 펫 -->
+    <!-- 토끼 펫 (위치 고정) -->
     <div id="desktop-pet" onclick="RabbitPet.hop()">
         <div class="pet-speech">안녕? 난 토끼야! 🐰</div>
         <div class="pet-body">🐰</div>
@@ -358,6 +366,7 @@
     </div>
 
     <!-- 우측 상단 위젯 -->
+    <!-- [수정] z-index 50 -> 10으로 하향 조정 (윈도우 뒤로 가도록) -->
     <div class="absolute top-8 right-8 text-right text-white select-none pointer-events-none flex flex-col items-end gap-2 z-10">
         <div>
             <h1 id="clock-time" class="text-6xl font-bold tracking-tight text-white drop-shadow-sm font-sans">12:00</h1>
@@ -480,11 +489,30 @@
                 }
             },
 
-            // 로그아웃 함수
-            logout: async () => {
-                if(confirm("정말 로그아웃 할까요?")) {
+            // 로그아웃 함수 (커스텀 모달)
+            logout: () => {
+                const modal = document.createElement('div');
+                modal.className = 'custom-modal-overlay';
+                modal.innerHTML = `
+                    <div class="custom-modal-box">
+                        <h3 class="text-lg font-bold mb-3 text-pink-500 text-center">로그아웃</h3>
+                        <p class="text-sm text-gray-600 text-center mb-4">정말 로그아웃 하시겠어요?</p>
+                        <div class="flex justify-center gap-3">
+                            <button onclick="this.closest('.custom-modal-overlay').remove()" class="px-4 py-2 rounded text-gray-500 bg-gray-100 hover:bg-gray-200">취소</button>
+                            <button onclick="DB.confirmLogout()" class="px-4 py-2 rounded bg-pink-400 text-white font-bold hover:bg-pink-500">확인</button>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('modal-container').appendChild(modal);
+            },
+
+            confirmLogout: async () => {
+                try {
                     await signOut(auth);
                     window.location.reload();
+                } catch (e) {
+                    console.error("Logout failed", e);
+                    alert("로그아웃 중 오류가 발생했습니다.");
                 }
             },
 
@@ -586,7 +614,12 @@
                 g.addColorStop(1,'#ffeaf4'); // Bottom: 아주 밝은 쿨톤 핑크
                 this.ctx.fillStyle = g; this.ctx.fillRect(0,0,this.w,this.h);
                 this.items.forEach(c => {
-                    c.y -= c.v; if(c.y < -50) c.y = this.h + 50;
+                    c.y -= c.v; 
+                    // FIX: 하트가 화면 위로 올라가면 위치를 다시 랜덤하게 섞어줍니다
+                    if(c.y < -50) {
+                        c.y = this.h + 50;
+                        c.x = Math.random() * this.w;
+                    }
                     this.ctx.fillStyle = 'rgba(255,255,255,0.6)';
                     this.drawHeart(this.ctx, c.x, c.y, c.s);
                 });
@@ -633,7 +666,8 @@
             init: () => {
                 RabbitPet.el = document.getElementById('desktop-pet');
                 RabbitPet.heart = document.querySelector('.pet-heart');
-                RabbitPet.moveLoop(); RabbitPet.talkLoop();
+                // RabbitPet.moveLoop(); // 움직임 루프 제거
+                RabbitPet.talkLoop();
             },
             hop: () => {
                 if(RabbitPet.isMoving) return;
@@ -685,23 +719,41 @@
             flip: (el) => { if(el.classList.contains('flipped')) return; const randomFortune = FortuneApp.fortunes[Math.floor(Math.random() * FortuneApp.fortunes.length)]; document.getElementById('fortune-text').innerText = randomFortune; el.classList.add('flipped'); }
         };
 
-        // Polaroid Widget
+        // Polaroid Widget (수정: 직접 이미지 변경 기능 복구)
         const PolaroidApp = {
-            init: () => { PolaroidApp.render(); },
+            data: { caption: '새봄이 땽', img: null },
+            init: () => {
+                const saved = DB.load('polaroid_data', PolaroidApp.data);
+                PolaroidApp.data = { ...PolaroidApp.data, ...saved };
+                PolaroidApp.render(); 
+            },
             render: () => {
-                const galleryImgs = DB.load('imgs', []);
-                const data = DB.load('polaroid_data', { caption: '새봄이 땽' });
-                const randImg = galleryImgs.length > 0 ? galleryImgs[Math.floor(Math.random() * galleryImgs.length)] : 'https://api.dicebear.com/7.x/avataaars/svg?seed=Saebom';
+                const defaultImg = 'https://api.dicebear.com/7.x/avataaars/svg?seed=Saebom';
+                const imgSrc = PolaroidApp.data.img || defaultImg;
                 const el = document.getElementById('polaroid-widget');
                 el.innerHTML = `
-                    <div class="aspect-square bg-gray-200 mb-2 overflow-hidden border border-gray-100">
-                        <img src="${randImg}" class="w-full h-full object-cover pointer-events-none">
+                    <div class="aspect-square bg-gray-200 mb-2 overflow-hidden border border-gray-100 group relative cursor-pointer" onclick="document.getElementById('polaroid-file-input').click()">
+                        <img src="${imgSrc}" class="w-full h-full object-cover pointer-events-none">
+                        <div class="polaroid-overlay text-white font-bold text-sm">사진 변경 📷</div>
                     </div>
-                    <input class="polaroid-caption" value="${data.caption}" oninput="PolaroidApp.saveCaption(this.value)" placeholder="메모..." onclick="event.stopPropagation()">
+                    <input type="file" id="polaroid-file-input" class="hidden" accept="image/*" onchange="PolaroidApp.updateImage(this)">
+                    <input class="polaroid-caption" value="${PolaroidApp.data.caption}" oninput="PolaroidApp.saveCaption(this.value)" placeholder="메모..." onclick="event.stopPropagation()">
                 `;
             },
             refresh: () => PolaroidApp.render(),
-            saveCaption: (val) => { const d = DB.load('polaroid_data', {}); d.caption = val; DB.save('polaroid_data', d); }
+            saveCaption: (val) => { 
+                PolaroidApp.data.caption = val; 
+                DB.save('polaroid_data', PolaroidApp.data); 
+            },
+            updateImage: (input) => {
+                if (input.files && input.files[0]) {
+                    Utils.readFile(input.files[0], (dataUrl) => {
+                        PolaroidApp.data.img = dataUrl;
+                        DB.save('polaroid_data', PolaroidApp.data);
+                        PolaroidApp.render();
+                    });
+                }
+            }
         };
 
         // Time Capsule App
@@ -742,7 +794,7 @@
         // --- Editable Profile App (수정됨: 흰색 배경) ---
         const ProfileApp = {
             data: {
-                name: '새봄', job: ' ', birth: ' ', mbti: ' ', live: ' ', bf: ' ', fav: ' ', img: 'https://api.iconify.design/noto:rabbit-face.svg'
+                name: '새봄', job: 'Web Designer', birth: '1996.11.04', mbti: 'ISFJ', live: 'Seoul', bf: ' ', fav: ' ', img: 'https://api.iconify.design/noto:rabbit-face.svg'
             },
             init: () => {
                 const saved = DB.load('profile_data_v2', ProfileApp.data);
@@ -810,6 +862,24 @@
                 const el = document.getElementById('app-diary-viewer'); if(!el) return;
                 const y = DiaryViewer.date.getFullYear(), m = DiaryViewer.date.getMonth();
                 const diaries = DB.load('planner_diary_v2', {});
+                
+                // [NEW] 무드 통계 계산
+                const moodCounts = { '🥰': 0, '😐': 0, '😭': 0, '😡': 0, '🥳': 0 };
+                let totalDiaries = 0;
+                const currentPrefix = `${y}-${m+1}-`;
+
+                Object.keys(diaries).forEach(dateKey => {
+                    // 해당 년월의 데이터인지 확인 (예: 2025-12-XX)
+                    const [dy, dm, dd] = dateKey.split('-').map(Number);
+                    if (dy === y && dm === m + 1) {
+                        const entry = diaries[dateKey];
+                        if (entry.mood && moodCounts[entry.mood] !== undefined) {
+                            moodCounts[entry.mood]++;
+                            totalDiaries++;
+                        }
+                    }
+                });
+
                 let h = `<div class="flex flex-col h-full bg-white/50"><div class="flex justify-between items-center p-4 bg-white/50 border-b border-pink-100"><h2 class="text-xl font-bold text-pink-500 font-sans">📖 그림일기 모아보기</h2><div class="flex gap-2"><select onchange="DiaryViewer.changeDate(this.value, ${m+1})" class="bg-white border-2 border-pink-100 rounded-lg px-2 py-1 text-sm text-gray-600 outline-none">${Array.from({length: 11}, (_, i) => y - 5 + i).map(yy => `<option value="${yy}" ${yy===y?'selected':''}>${yy}년</option>`).join('')}</select><select onchange="DiaryViewer.changeDate(${y}, this.value)" class="bg-white border-2 border-pink-100 rounded-lg px-2 py-1 text-sm text-gray-600 outline-none">${Array.from({length: 12}, (_, i) => i + 1).map(mm => `<option value="${mm}" ${mm===m+1?'selected':''}>${mm}월</option>`).join('')}</select></div></div><div class="photo-calendar-grid flex-1 overflow-auto">`;
                 const first = new Date(y, m, 1).getDay(); const last = new Date(y, m + 1, 0).getDate();
                 for(let i=0; i<first; i++) h += `<div></div>`;
@@ -819,7 +889,28 @@
                     if (entry) { if (entry.img) content = `<img src="${entry.img}">`; else content = `<div class="no-img">🐰</div>`; }
                     h += `<div class="photo-calendar-day" onclick="DiaryViewer.viewEntry('${dateKey}', ${i})"><span class="day-num">${i}</span>${content}</div>`;
                 }
-                h += `</div></div>`; el.innerHTML = h;
+                h += `</div>`;
+
+                // [NEW] 무드 그래프 추가 (슬림 버전)
+                h += `<div class="p-2 bg-white/80 border-t border-pink-100">
+                        <h3 class="text-xs font-bold text-pink-500 mb-1 font-sans">📊 이번 달 내 기분은?</h3>
+                        <div class="space-y-1">`;
+                
+                for (const [mood, count] of Object.entries(moodCounts)) {
+                    const percent = totalDiaries > 0 ? (count / totalDiaries) * 100 : 0;
+                    const displayPercent = count > 0 ? Math.max(percent, 5) : 0; 
+                    
+                    h += `<div class="flex items-center gap-2 text-[10px]">
+                            <span class="w-4 text-sm text-center">${mood}</span>
+                            <div class="flex-1 h-1.5 bg-pink-50 rounded-full overflow-hidden border border-pink-100">
+                                <div class="h-full bg-gradient-to-r from-pink-200 to-pink-400 transition-all duration-500 ease-out" style="width: ${displayPercent}%"></div>
+                            </div>
+                            <span class="w-6 text-gray-400 text-right font-bold">${count}</span>
+                          </div>`;
+                }
+                h += `</div></div></div>`; // 닫는 태그들
+                
+                el.innerHTML = h;
             },
             viewEntry: (dateKey, day) => {
                 const diaries = DB.load('planner_diary_v2', {}); const entry = diaries[dateKey]; if (!entry) return alert('이 날은 일기가 없어! 😢');
@@ -896,12 +987,12 @@
         // --- 기타 앱들 ---
         const Apps = {
             notepad: { t: '✏️ 메모장', w: 400, h: 500, c: `<div id="app-notepad" class="h-full flex flex-col bg-pink-50/30"></div>`, run: () => Apps.notepad.run() },
-            planner: { t: '📅 핑크 다이어리', w: 900, h: 700, c: `<div id="app-planner" class="h-full"></div>`, run: () => Planner.init() },
+            planner: { t: '📅 다이어리', w: 900, h: 700, c: `<div id="app-planner" class="h-full"></div>`, run: () => Planner.init() },
             todo: { t: '✅ 투두리스트', w: 350, h: 500, c: `<div id="app-todo" class="h-full flex flex-col p-3 bg-white"></div>`, run: () => Apps.todo.run() },
             gallery: { t: '📷 갤러리', w: 500, h: 600, c: `<div id="app-gallery" class="h-full flex flex-col"></div>`, run: () => Apps.gallery.run() },
             profile: { t: '🐰 프로필', w: 380, h: 500, c: `<div id="app-profile" class="h-full overflow-hidden relative"></div>`, run: () => ProfileApp.init() },
             fortune: { t: '🍀 오늘의 운세', w: 400, h: 500, c: '', run: () => FortuneApp.init() }, 
-            diary_viewer: { t: '📖 그림일기 모아보기', w: 700, h: 600, c: `<div id="app-diary-viewer" class="h-full"></div>`, run: () => DiaryViewer.init() },
+            diary_viewer: { t: '📖 일기 모아보기', w: 700, h: 600, c: `<div id="app-diary-viewer" class="h-full"></div>`, run: () => DiaryViewer.init() },
             time_capsule: { t: '📮 타임캡슐', w: 400, h: 500, c: `<div id="app-time-capsule" class="h-full"></div>`, run: () => TimeCapsuleApp.init() },
             polaroid: { t: '📸 폴라로이드', w: 0, h: 0, c:'', run: () => PolaroidApp.init() } 
         };
@@ -914,7 +1005,6 @@
              Apps.notepad.del = (id) => { if(confirm('삭제해?')) { DB.save('memos', DB.load('memos',[]).filter(x=>x.id!==id)); Apps.notepad.run(); } }; render();
         };
         Apps.todo.run = () => {
-             // [수정] 투두리스트 기본 항목 제거: [{id:1,t:'UX/UI 공부하기',d:false}] -> []
              const render = () => { const l = DB.load('todos', []); document.getElementById('app-todo').innerHTML = `<div class="flex gap-2 mb-4"><input id="todo-in" class="flex-1 border-2 border-pink-100 rounded px-3 py-2 text-sm outline-none focus:border-pink-300 font-sans" placeholder="할 일..."><button onclick="Apps.todo.add()" class="bg-pink-400 text-white px-3 rounded hover:bg-pink-500"><i class="fas fa-plus"></i></button></div><div class="flex-1 overflow-auto space-y-2">${l.map(t=>`<div class="flex items-center gap-2 p-2 border border-pink-50 rounded hover:bg-pink-50"><input type="checkbox" ${t.d?'checked':''} onclick="Apps.todo.tog(${t.id})" class="accent-pink-400"><span class="flex-1 text-sm font-sans text-lg ${t.d?'line-through text-gray-400':''}">${t.t}</span><button onclick="Apps.todo.del(${t.id})" class="text-gray-300 hover:text-red-400"><i class="fas fa-times"></i></button></div>`).join('')}</div>`; };
              Apps.todo.add = () => { const v=document.getElementById('todo-in').value; if(v){ const l=DB.load('todos',[]); l.push({id:Date.now(),t:v,d:false}); DB.save('todos',l); render(); } };
              Apps.todo.tog = (id) => { const l=DB.load('todos',[]); const t=l.find(x=>x.id===id); if(t){ t.d=!t.d; DB.save('todos',l); render(); } };
@@ -933,7 +1023,6 @@
                 new MouseTrail(); 
                 app.wm = new WindowManager(); 
                 
-                // DB 초기화 대기 (로딩 화면 유지)
                 await DB.init();
                 
                 DDayApp.init(); 
@@ -941,7 +1030,6 @@
                 HeartWidget.init(); 
                 RabbitPet.init();
                 
-                // 전역 객체 연결
                 window.TimeCapsuleApp = TimeCapsuleApp; window.PolaroidApp = PolaroidApp; window.HeartWidget = HeartWidget; window.RabbitPet = RabbitPet; window.DDayApp = DDayApp; window.ProfileApp = ProfileApp;
 
                 const update = () => { document.getElementById('clock-time').innerText = Utils.formatTime(); }; setInterval(update, 1000); update();
@@ -956,7 +1044,6 @@
             close: (id) => app.wm.close(id), max: (id) => app.wm.max(id)
         };
         
-        // 전역 노출
         window.app = app; window.Planner = Planner; window.DDayApp = DDayApp; window.FortuneApp = FortuneApp; window.DiaryViewer = DiaryViewer; window.Apps = Apps; window.DB = DB; window.Utils = Utils; window.HeartWidget = HeartWidget; window.RabbitPet = RabbitPet; window.PolaroidApp = PolaroidApp; window.TimeCapsuleApp = TimeCapsuleApp; window.ProfileApp = ProfileApp;
 
         window.onload = app.init;
