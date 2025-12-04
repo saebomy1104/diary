@@ -28,6 +28,8 @@
                         'bounce-slight': 'bounceSlight 2s infinite',
                         'pop-in': 'popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                         'float-heart': 'floatHeart 6s ease-in-out infinite',
+                        'float-widget': 'floatWidget 4s ease-in-out infinite',
+                        'rabbit-hop': 'rabbitHop 0.5s ease-in-out',
                     },
                     keyframes: {
                         bounceSlight: {
@@ -41,6 +43,14 @@
                         floatHeart: {
                             '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
                             '50%': { transform: 'translateY(-20px) rotate(10deg)' }
+                        },
+                        floatWidget: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-8px)' }
+                        },
+                        rabbitHop: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' }
                         }
                     }
                 }
@@ -50,12 +60,12 @@
 
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Paperlogy', sans-serif; user-select: none; }
-        input, textarea { user-select: text !important; }
+        input, textarea { user-select: text !important; font-family: 'Paperlogy', sans-serif !important; }
         
         /* 배경 캔버스 */
         #sky-canvas { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; 
-            background: linear-gradient(to bottom, #FFC3A0, #FFAFBD); 
+            background: linear-gradient(to bottom, #ffeaf4 0%, #ff9ebb 100%); 
         }
 
         /* 배경 패턴 */
@@ -108,7 +118,7 @@
         }
         .dock-item:hover { transform: translateY(-10px) scale(1.1); background: #FFF0F5; color: #FF69B4; }
         
-        /* 캘린더 */
+        /* 캘린더 등 공통 스타일 */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
         .calendar-day {
             min-height: 100px; padding: 6px; border-radius: 8px; cursor: pointer;
@@ -119,18 +129,80 @@
         .calendar-day.today { border: 2px solid #FF69B4; background: #FFF5F8; }
         .calendar-day.today .day-num { background: #FF69B4; color: white; padding: 2px 6px; border-radius: 8px; display: inline-block; }
         
-        /* 일정 스타일 */
         .schedule-item { font-size: 11px; padding: 2px 4px; border-radius: 4px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .schedule-item.yearly { background-color: #FEF3C7; color: #D97706; border-left: 2px solid #F59E0B; }
         .schedule-item.monthly { background-color: #FCE7F3; color: #BE185D; border-left: 3px solid #FF69B4; }
-        
-        /* 이얼리 */
-        .yearly-month { background: white; border-radius: 12px; padding: 8px; border: 1px solid #FFE4E1; }
-        .yearly-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
-        .yearly-day { font-size: 9px; text-align: center; padding: 2px 0; cursor: pointer; border-radius: 2px; }
-        .yearly-day:hover { background: #FFB7C5; color: white; }
-        .yearly-day.has-anniversary { background: #FCD34D; color: #78350F; font-weight: bold; }
 
+        /* [NEW] 이얼리(연간) 뷰 스타일 추가 */
+        .yearly-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            text-align: center;
+        }
+        .yearly-day {
+            aspect-ratio: 1/1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            color: #666;
+        }
+        .yearly-day:hover {
+            background-color: #FFF0F5;
+        }
+        /* 기념일이 있는 날짜 표시 */
+        .yearly-day.has-anniversary {
+            background-color: #FF80AB;
+            color: white;
+            font-weight: bold;
+            border-radius: 50%;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* 다이어리 & 아이콘 선택기 */
+        .icon-selector, .meta-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .icon-option, .meta-icon {
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; cursor: pointer; border: 1px solid transparent; transition: all 0.2s;
+            font-size: 18px; background: white;
+        }
+        .icon-option:hover, .meta-icon:hover { transform: scale(1.1); background: #FFF0F5; }
+        .icon-option.selected, .meta-icon.selected { background: #FF80AB; color: white; border-color: #FF80AB; box-shadow: 0 2px 5px rgba(255, 128, 171, 0.4); }
+
+        .picture-frame {
+            width: 100%; aspect-ratio: 4/3; background: #f9fafb; border: 2px dashed #FFB7C5; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative;
+        }
+        .picture-frame:hover { background: #FFF0F5; border-color: #FF80AB; }
+        .picture-frame img { width: 100%; height: 100%; object-fit: cover; }
+
+        .lined-paper {
+            background: repeating-linear-gradient(transparent, transparent 27px, #ffe4e1 28px);
+            line-height: 28px; padding: 6px 10px; border: 1px solid #FFB7C5; border-radius: 8px; resize: none; outline: none;
+        }
+
+        /* 그림일기 모아보기 */
+        .photo-calendar-grid {
+            display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 10px;
+        }
+        .photo-calendar-day {
+            aspect-ratio: 1/1; background: white; border-radius: 8px; overflow: hidden; position: relative;
+            cursor: pointer; border: 1px solid #eee; transition: transform 0.2s;
+        }
+        .photo-calendar-day:hover { transform: scale(1.05); z-index: 10; border-color: #FF80AB; shadow: md; }
+        .photo-calendar-day img { width: 100%; height: 100%; object-fit: cover; }
+        .photo-calendar-day .day-num {
+            position: absolute; top: 4px; left: 4px; font-size: 10px; font-weight: bold;
+            background: rgba(255,255,255,0.8); padding: 2px 4px; border-radius: 4px; z-index: 2;
+        }
+        .no-img {
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+            background: #fdf2f8; color: #fbcfe8; font-size: 20px;
+        }
+        
         /* 커스텀 모달 */
         .custom-modal-overlay {
             position: fixed; inset: 0; background: rgba(255, 230, 240, 0.6); backdrop-filter: blur(2px); z-index: 9999;
@@ -141,60 +213,83 @@
             box-shadow: 0 10px 40px rgba(255, 105, 180, 0.2); border: 2px solid #FFB7C5;
             animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        
-        /* 그림일기 스타일 */
-        .diary-modal { width: 420px !important; }
-        .picture-frame {
-            width: 100%; aspect-ratio: 4/3; background: #f8f8f8; border: 2px dashed #ddd; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative;
-            transition: all 0.2s;
-        }
-        .picture-frame:hover { border-color: #FFB7C5; background: #fff0f5; }
-        .picture-frame img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .meta-selector { display: flex; gap: 4px; justify-content: center; }
-        .meta-icon { 
-            width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; font-size: 16px; border: 1px solid transparent; background: #fff;
-        }
-        .meta-icon.selected { background: #FFF0F5; border-color: #FF69B4; transform: scale(1.1); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        
-        .lined-paper {
-            background-image: linear-gradient(#eee 1px, transparent 1px);
-            background-size: 100% 1.5em;
-            line-height: 1.5em;
-            padding: 0.2em;
-            border: none;
-            resize: none;
-            outline: none;
-            width: 100%;
-        }
 
-        /* 아이콘 선택기 */
-        .icon-selector { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; margin-bottom: 10px; }
-        .icon-option { 
-            width: 36px; height: 36px; border-radius: 50%; background: #FFF0F5; 
-            display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 18px; flex-shrink: 0; border: 2px solid transparent;
+        /* 하트 위젯 스타일 */
+        #heart-widget {
+            position: absolute; 
+            top: 15%; left: 10%; 
+            width: 320px; height: 280px; 
+            z-index: 5;
+            animation: float-widget 4s ease-in-out infinite;
+            cursor: grab;
+            filter: drop-shadow(0 10px 15px rgba(255, 105, 180, 0.2));
         }
-        .icon-option.selected { border-color: #FF69B4; background: white; transform: scale(1.1); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        #heart-memo {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 65%; height: 50%; 
+            background: transparent; border: none; resize: none;
+            outline: none; text-align: center; font-family: 'Paperlogy', sans-serif;
+            font-size: 20px; 
+            font-weight: 500; /* [수정] 폰트 두께 미디움(500)으로 변경 */
+            color: #ff6b8b; 
+            z-index: 10;
+        }
+        #heart-memo::placeholder { color: #ffb7c5; }
 
-        /* 다이어리 뷰어 (포토 캘린더) */
-        .photo-calendar-grid {
-            display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 4px;
+        /* 폴라로이드 스타일 */
+        #polaroid-widget {
+            position: absolute; 
+            bottom: 20%; right: 5%; 
+            width: 220px;
+            background: white; padding: 12px 12px 35px 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            transform: rotate(-3deg); transition: transform 0.3s; cursor: pointer; z-index: 5;
         }
-        .photo-calendar-day {
-            aspect-ratio: 1; border-radius: 8px; overflow: hidden; position: relative; background: #FFF0F5; border: 1px solid white; cursor: pointer;
-            transition: transform 0.2s;
+        #polaroid-widget:hover { transform: rotate(0deg) scale(1.05) translateY(-5px); z-index: 20; box-shadow: 0 15px 40px rgba(255, 105, 180, 0.3); }
+        #polaroid-widget::before { 
+            content: ''; position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+            width: 80px; height: 25px; background: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); transform: translateX(-50%) rotate(2deg);
         }
-        .photo-calendar-day:hover { transform: scale(1.05); z-index: 10; box-shadow: 0 4px 10px rgba(255,183,197,0.4); }
-        .photo-calendar-day img { width: 100%; height: 100%; object-fit: cover; }
-        .photo-calendar-day .day-num {
-            position: absolute; top: 4px; left: 4px; background: rgba(255,255,255,0.8); 
-            padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: bold; color: #FF69B4;
+        .polaroid-caption { 
+            font-family: 'Paperlogy', sans-serif; text-align: center; margin-top: 15px; 
+            color: #666; outline: none; border: none; background: transparent; width: 100%;
+            font-size: 16px; border-bottom: 1px solid transparent; font-weight: bold;
         }
-        .photo-calendar-day .no-img {
-            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #FFB7C5;
+        .polaroid-caption:focus { border-bottom: 1px dashed #FFB7C5; background: #fff0f5; }
+
+        /* 토끼 펫 스타일 */
+        #desktop-pet {
+            position: absolute; bottom: 100px; left: 100px; width: 60px; height: 60px; z-index: 10;
+            cursor: pointer; transition: transform 0.2s;
         }
+        #desktop-pet:active { transform: scale(0.9); }
+        .pet-body { font-size: 50px; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.1)); }
+        .pet-heart { 
+            position: absolute; top: -30px; left: 50%; transform: translateX(-50%); 
+            font-size: 24px; opacity: 0; transition: opacity 0.5s, transform 0.5s; pointer-events: none;
+        }
+        .pet-heart.show { opacity: 1; transform: translateX(-50%) translateY(-20px); }
+        .pet-speech {
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            background: white; border: 2px solid #FFB7C5; border-radius: 12px;
+            padding: 6px 10px; font-size: 11px; color: #FF69B4; font-weight: bold;
+            white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.3s, transform 0.3s;
+            margin-bottom: 10px; box-shadow: 0 2px 10px rgba(255,182,193,0.3); z-index: 20;
+        }
+        .pet-speech::after {
+            content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+            border-width: 5px 5px 0; border-style: solid; border-color: #FFB7C5 transparent transparent transparent;
+        }
+        .pet-speech.show { opacity: 1; transform: translateX(-50%) translateY(-5px); }
+
+        /* 타로 카드 등 기타 스타일 생략 (기존 유지) */
+        .tarot-card { width: 180px; height: 280px; perspective: 1000px; cursor: pointer; }
+        .tarot-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.8s; transform-style: preserve-3d; }
+        .tarot-card.flipped .tarot-inner { transform: rotateY(180deg); }
+        .tarot-front, .tarot-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 15px; border: 3px solid #FFB7C5; box-shadow: 0 10px 20px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .tarot-front { background: white; transform: rotateY(180deg); padding: 15px; }
+        .tarot-back { background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%); }
+        .tarot-back::after { content: '🔮'; font-size: 50px; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         ::-webkit-scrollbar { width: 6px; }
@@ -206,13 +301,36 @@
     <!-- 로딩 (핑크) -->
     <div id="loading-screen" class="fixed inset-0 z-[9999] bg-[#FFB7C5] flex flex-col items-center justify-center transition-opacity duration-700">
         <i class="fas fa-heart text-6xl text-white animate-bounce mb-4"></i>
-        <h1 class="text-3xl font-bold text-white tracking-widest">Sky Mini-Hompy</h1>
+        <h1 class="text-3xl font-bold text-white tracking-widest font-sans">Sky Mini-Hompy</h1>
         <p class="text-white/90 mt-2">새봄이의 핑크빛 하루 로딩 중... 🎀</p>
     </div>
 
     <!-- 배경 -->
     <div id="bg-pattern"></div>
     <canvas id="sky-canvas"></canvas>
+    <canvas id="cursor-canvas"></canvas>
+
+    <!-- 하트 메모 위젯 (placeholder 제거) -->
+    <div id="heart-widget">
+        <!-- SVG 하트 배경 (흰색) -->
+        <svg class="absolute inset-0 w-full h-full text-white drop-shadow-xl" viewBox="0 0 24 24" fill="currentColor" opacity="0.95">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <!-- [수정] placeholder 내용 삭제 -->
+        <textarea id="heart-memo" placeholder="" oninput="HeartWidget.save(this.value)"></textarea>
+    </div>
+
+    <!-- 폴라로이드 위젯 -->
+    <div id="polaroid-widget" onclick="PolaroidApp.refresh()">
+        <!-- JS로 내용 채움 -->
+    </div>
+
+    <!-- 토끼 펫 -->
+    <div id="desktop-pet" onclick="RabbitPet.hop()">
+        <div class="pet-speech">안녕? 난 토끼야! 🐰</div>
+        <div class="pet-body">🐰</div>
+        <div class="pet-heart">💖</div>
+    </div>
 
     <!-- 아이콘 -->
     <div class="absolute top-8 left-8 flex flex-col gap-6 z-10">
@@ -222,14 +340,14 @@
             </div>
             <span class="text-white font-bold drop-shadow-md text-sm bg-pink-400/50 px-2 rounded">내 프로필</span>
         </div>
-        <div class="group flex flex-col items-center gap-2 cursor-pointer hover:scale-105 transition" onclick="app.openWindow('goal')">
-            <div class="w-16 h-16 bg-white/40 backdrop-blur rounded-2xl flex items-center justify-center border border-white/60 shadow-lg group-hover:bg-white/70">
-                <i class="fas fa-bullseye text-3xl text-red-400"></i>
-            </div>
-            <span class="text-white font-bold drop-shadow-md text-sm bg-pink-400/50 px-2 rounded">목표</span>
-        </div>
         
-        <!-- NEW: 일기장 (낮/밤 위쪽) -->
+        <div class="group flex flex-col items-center gap-2 cursor-pointer hover:scale-105 transition" onclick="app.openWindow('fortune')">
+            <div class="w-16 h-16 bg-white/40 backdrop-blur rounded-2xl flex items-center justify-center border border-white/60 shadow-lg group-hover:bg-white/70">
+                <i class="fas fa-clover text-3xl text-green-400"></i>
+            </div>
+            <span class="text-white font-bold drop-shadow-md text-sm bg-pink-400/50 px-2 rounded">오늘의 운세</span>
+        </div>
+
         <div class="group flex flex-col items-center gap-2 cursor-pointer hover:scale-105 transition" onclick="app.openWindow('diary_viewer')">
              <div class="w-16 h-16 bg-white/40 backdrop-blur rounded-2xl flex items-center justify-center border border-white/60 shadow-lg group-hover:bg-white/70">
                 <i class="fas fa-book-open text-3xl text-pink-500"></i>
@@ -237,18 +355,19 @@
             <span class="text-white font-bold drop-shadow-md text-sm bg-pink-400/50 px-2 rounded">그림일기</span>
         </div>
 
-        <div class="group flex flex-col items-center gap-2 cursor-pointer hover:scale-105 transition" onclick="app.toggleTheme()">
+        <!-- 타임캡슐 -->
+        <div class="group flex flex-col items-center gap-2 cursor-pointer hover:scale-105 transition" onclick="app.openWindow('time_capsule')">
              <div class="w-16 h-16 bg-white/40 backdrop-blur rounded-2xl flex items-center justify-center border border-white/60 shadow-lg group-hover:bg-white/70">
-                <i id="theme-icon" class="fas fa-sun text-3xl text-yellow-400"></i>
+                <i class="fas fa-hourglass-half text-3xl text-orange-400"></i>
             </div>
-            <span class="text-white font-bold drop-shadow-md text-sm bg-pink-400/50 px-2 rounded">낮/밤</span>
+            <span class="text-white font-bold drop-shadow-md text-sm bg-pink-400/50 px-2 rounded">타임캡슐</span>
         </div>
     </div>
 
     <!-- 우측 상단 위젯 -->
     <div class="absolute top-8 right-8 text-right text-white select-none pointer-events-none flex flex-col items-end gap-2 z-10">
         <div>
-            <h1 id="clock-time" class="text-6xl font-bold tracking-tight text-white drop-shadow-sm">12:00</h1>
+            <h1 id="clock-time" class="text-6xl font-bold tracking-tight text-white drop-shadow-sm font-sans">12:00</h1>
             <p id="clock-date" class="text-lg opacity-90 font-bold">2025년 12월 3일 수요일</p>
         </div>
         <div class="flex items-center gap-2 bg-white/30 backdrop-blur px-3 py-1 rounded-full border border-white/50">
@@ -277,8 +396,8 @@
     <script>
         // --- 0. 데이터베이스 ---
         const DB = {
-            save: (key, data) => { try { localStorage.setItem(`skyos_v8_${key}`, JSON.stringify(data)); } catch(e) { console.error('Storage Full'); } },
-            load: (key, defaultVal) => { try { const d = localStorage.getItem(`skyos_v8_${key}`); return d ? JSON.parse(d) : defaultVal; } catch(e) { return defaultVal; } }
+            save: (key, data) => { try { localStorage.setItem(`skyos_v15_${key}`, JSON.stringify(data)); } catch(e) { console.error('Storage Full'); } },
+            load: (key, defaultVal) => { try { const d = localStorage.getItem(`skyos_v15_${key}`); return d ? JSON.parse(d) : defaultVal; } catch(e) { return defaultVal; } }
         };
 
         const Utils = {
@@ -288,7 +407,27 @@
             readFile: (f, cb) => { const r = new FileReader(); r.onload = e => cb(e.target.result); r.readAsDataURL(f); }
         };
 
-        // --- 1. 스카이 렌더러 ---
+        // --- 1. 마우스 트레일 ---
+        class MouseTrail {
+            constructor() {
+                this.cvs = document.getElementById('cursor-canvas'); this.ctx = this.cvs.getContext('2d'); this.particles = [];
+                this.resize(); window.addEventListener('resize', () => this.resize());
+                window.addEventListener('mousemove', (e) => this.add(e.clientX, e.clientY)); this.loop();
+            }
+            resize() { this.w = this.cvs.width = window.innerWidth; this.h = this.cvs.height = window.innerHeight; }
+            add(x, y) { this.particles.push({x, y, size: Math.random()*10+5, life: 1, vX: Math.random()-0.5, vY: Math.random()-0.5}); }
+            drawHeart(x, y, size, alpha) {
+                const ctx = this.ctx; ctx.globalAlpha = alpha; ctx.fillStyle = "#FFFFFF"; ctx.beginPath(); ctx.translate(x, y); ctx.scale(size/10, size/10);
+                ctx.moveTo(0, 0); ctx.bezierCurveTo(-5, -5, -10, 2.5, 0, 10); ctx.bezierCurveTo(10, 2.5, 5, -5, 0, 0); ctx.fill(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+            }
+            loop() {
+                this.ctx.clearRect(0, 0, this.w, this.h);
+                this.particles.forEach((p, i) => { p.x += p.vX; p.y += p.vY + 0.5; p.life -= 0.03; if(p.life <= 0) this.particles.splice(i, 1); else this.drawHeart(p.x, p.y, p.size, p.life); });
+                requestAnimationFrame(() => this.loop());
+            }
+        }
+
+        // --- 2. 스카이 렌더러 (배경 그라데이션) ---
         class SkyRenderer {
             constructor() {
                 this.cvs = document.getElementById('sky-canvas'); this.ctx = this.cvs.getContext('2d'); this.items = [];
@@ -299,23 +438,24 @@
             resize() { this.w = this.cvs.width = window.innerWidth; this.h = this.cvs.height = window.innerHeight; }
             drawHeart(ctx, x, y, size) {
                 ctx.save(); ctx.translate(x, y); ctx.scale(size, size); ctx.beginPath();
-                ctx.moveTo(0, 0); ctx.bezierCurveTo(-10, -10, -20, 5, 0, 20); ctx.bezierCurveTo(20, 5, 10, -10, 0, 0);
-                ctx.fill(); ctx.restore();
+                ctx.moveTo(0, 0); ctx.bezierCurveTo(-10, -10, -20, 5, 0, 20); ctx.bezierCurveTo(20, 5, 10, -10, 0, 0); ctx.fill(); ctx.restore();
             }
             loop() {
                 const g = this.ctx.createLinearGradient(0,0,0,this.h);
-                if(this.night) { g.addColorStop(0,'#2c3e50'); g.addColorStop(1,'#4ca1af'); } else { g.addColorStop(0,'#FFC3A0'); g.addColorStop(1,'#FFAFBD'); }
+                // 메인 배경: 쿨톤 핑크 그라데이션 (위: 아주 밝음, 아래: 진함)
+                g.addColorStop(0,'#ffeaf4'); // Top: 아주 밝은 쿨톤 핑크
+                g.addColorStop(1,'#ff9ebb'); // Bottom: 조금 진한 쿨톤 핑크
                 this.ctx.fillStyle = g; this.ctx.fillRect(0,0,this.w,this.h);
                 this.items.forEach(c => {
                     c.y -= c.v; if(c.y < -50) c.y = this.h + 50;
-                    this.ctx.fillStyle = this.night ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)';
+                    this.ctx.fillStyle = 'rgba(255,255,255,0.6)';
                     this.drawHeart(this.ctx, c.x, c.y, c.s);
                 });
                 requestAnimationFrame(() => this.loop());
             }
         }
 
-        // --- 2. 윈도우 관리자 ---
+        // --- 3. 윈도우 관리자 ---
         class WindowManager {
             constructor() { this.el = document.getElementById('window-container'); this.z = 100; this.wins = {}; }
             create(id, title, content, w, h) {
@@ -333,325 +473,343 @@
             drag(el, id) { const h = el.querySelector('.window-header'); let x, y; h.onmousedown = e => { x=e.clientX; y=e.clientY; document.onmousemove = drag; document.onmouseup = stop; this.front(id); }; const drag = e => { el.style.top = (el.offsetTop - (y - e.clientY)) + "px"; el.style.left = (el.offsetLeft - (x - e.clientX)) + "px"; x=e.clientX; y=e.clientY; }; const stop = () => { document.onmousemove = null; document.onmouseup = null; }; }
         }
 
-        // --- 3. D-Day App ---
+        // --- 4. Widget Logics ---
+        
+        // Heart Widget (메모장)
+        const HeartWidget = {
+            init: () => {
+                const memo = DB.load('heart_memo', ''); 
+                const el = document.getElementById('heart-memo');
+                if(el) el.value = memo;
+            },
+            save: (val) => {
+                DB.save('heart_memo', val);
+            }
+        };
+
+        // Rabbit Pet
+        const RabbitPet = {
+            el: null, heart: null, isMoving: false,
+            messages: ["새봄아 눈 깜빡여봐! 👀", "으쌰으쌰 스트레칭! 🙆‍♀️", "사랑해! 💖", "오늘 기분 어때? 🐰", "물 마셨어? 💧", "거북목 조심! 🐢", "웃어봐 스마일 ✨", "당 충전 고고? 🍭", "넌 최고야! 👍"],
+            init: () => {
+                RabbitPet.el = document.getElementById('desktop-pet');
+                RabbitPet.heart = document.querySelector('.pet-heart');
+                RabbitPet.moveLoop(); RabbitPet.talkLoop();
+            },
+            hop: () => {
+                if(RabbitPet.isMoving) return;
+                RabbitPet.el.classList.add('animate-rabbit-hop');
+                RabbitPet.heart.classList.add('show');
+                RabbitPet.talk();
+                setTimeout(() => { RabbitPet.el.classList.remove('animate-rabbit-hop'); RabbitPet.heart.classList.remove('show'); }, 1000);
+            },
+            talk: () => {
+                const msg = RabbitPet.messages[Math.floor(Math.random() * RabbitPet.messages.length)];
+                const bubble = document.querySelector('.pet-speech');
+                bubble.innerText = msg; bubble.classList.add('show'); setTimeout(() => bubble.classList.remove('show'), 3000);
+            },
+            talkLoop: () => { setTimeout(() => { RabbitPet.talk(); RabbitPet.talkLoop(); }, Math.random() * 5000 + 8000); },
+            moveLoop: () => {
+                if(Math.random() > 0.7) { 
+                    const x = Math.random() * (window.innerWidth - 100);
+                    RabbitPet.el.style.transform = `translateX(${x}px) scaleX(${Math.random() > 0.5 ? 1 : -1})`; 
+                    RabbitPet.el.style.left = '0px'; RabbitPet.el.style.transition = "all 2s ease-in-out"; RabbitPet.el.style.left = x + "px"; RabbitPet.el.style.transform = "none"; 
+                } setTimeout(RabbitPet.moveLoop, 3000);
+            }
+        };
+
+        // D-Day App
         const DDayApp = {
             data: {},
             init: () => {
                 DDayApp.data = DB.load('my_dday', { date: '2022-10-01', name: '건용이랑 사랑한지', icon1: '🤴', icon2: '👸' });
                 DDayApp.render();
             },
-            render: () => {
-                const days = Utils.calculateDDay(DDayApp.data.date);
-                document.getElementById('dday-widget').innerHTML = `<div class="flex -space-x-2 text-lg"><span>${DDayApp.data.icon1}</span><span>${DDayApp.data.icon2}</span></div><div><p class="text-[10px] text-white font-bold">${DDayApp.data.name}</p><p class="text-lg font-extrabold text-white drop-shadow-sm">D + ${days}일 💕</p></div>`;
-            },
+            render: () => { const days = Utils.calculateDDay(DDayApp.data.date); document.getElementById('dday-widget').innerHTML = `<div class="flex -space-x-2 text-lg"><span>${DDayApp.data.icon1}</span><span>${DDayApp.data.icon2}</span></div><div><p class="text-[10px] text-white font-bold">${DDayApp.data.name}</p><p class="text-lg font-extrabold text-white drop-shadow-sm font-sans">D + ${days}일 💕</p></div>`; },
             openSettings: () => {
                 const modal = document.createElement('div'); modal.className = 'custom-modal-overlay'; modal.onmousedown = (e) => e.stopPropagation();
                 modal.innerHTML = `<div class="custom-modal-box"><h3 class="text-lg font-bold mb-3 text-pink-500">D-Day 설정</h3><div class="space-y-3"><div><label class="text-xs text-gray-500">제목</label><input id="dd-name" class="w-full border p-1 rounded" value="${DDayApp.data.name}"></div><div><label class="text-xs text-gray-500">날짜</label><input id="dd-date" type="date" class="w-full border p-1 rounded" value="${DDayApp.data.date}"></div><div class="flex gap-2"><div class="flex-1"><label class="text-xs text-gray-500">아이콘 1</label><input id="dd-icon1" class="w-full border p-1 rounded text-center" value="${DDayApp.data.icon1}"></div><div class="flex-1"><label class="text-xs text-gray-500">아이콘 2</label><input id="dd-icon2" class="w-full border p-1 rounded text-center" value="${DDayApp.data.icon2}"></div></div></div><div class="flex justify-end gap-2 mt-4"><button onclick="this.closest('.custom-modal-overlay').remove()" class="px-3 py-1 rounded text-gray-500 bg-gray-100">취소</button><button onclick="DDayApp.save()" class="px-3 py-1 rounded bg-pink-400 text-white font-bold">저장</button></div></div>`;
                 document.getElementById('modal-container').appendChild(modal);
             },
-            save: () => {
-                DDayApp.data.name = document.getElementById('dd-name').value; DDayApp.data.date = document.getElementById('dd-date').value; DDayApp.data.icon1 = document.getElementById('dd-icon1').value; DDayApp.data.icon2 = document.getElementById('dd-icon2').value;
-                DB.save('my_dday', DDayApp.data); DDayApp.render(); document.querySelector('.custom-modal-overlay').remove();
+            save: () => { DDayApp.data.name = document.getElementById('dd-name').value; DDayApp.data.date = document.getElementById('dd-date').value; DDayApp.data.icon1 = document.getElementById('dd-icon1').value; DDayApp.data.icon2 = document.getElementById('dd-icon2').value; DB.save('my_dday', DDayApp.data); DDayApp.render(); document.querySelector('.custom-modal-overlay').remove(); }
+        };
+
+        // Fortune App
+        const FortuneApp = {
+            fortunes: ["오늘은 뭘 해도 되는 날! 🎫", "길 가다 돈 줍는 행운?! 👀", "인생샷 건지는 날! 📸", "뜻밖의 선물 도착 🎁", "먹고 싶던 거 먹는 날 🍔", "피부가 꿀피부 ✨", "택배가 빨리 온다 📦", "대중교통 타이밍 굿 🚌", "자신감을 가져! 👑", "소확행이 찾아온다 🥰", "머리 스타일 굿 💇‍♀️", "맛있는 디저트 발견 🍰", "하늘을 봐봐 예뻐 ☁️", "좋아하는 노래 들어봐 🎧", "물 많이 마시기 💧", "스트레칭 쫙쫙 🧘‍♀️", "방 청소하면 운 UP 🧹", "일찍 자면 피부 미인 🌙", "새로운 취미 도전? 🎨", "친구에게 톡해봐 📱", "핑크템이 행운템 🎀", "비타민 챙겨 💊", "차 한 잔의 여유 ☕", "귀여운 고양이 봄 🐾", "지갑 사수! 💸", "우산 챙겨 ☔", "말 조심 🤫", "저장(Ctrl+S) 필수 💾", "무리 금지 🔋", "체함 주의 🥄", "발가락 찧음 주의 🦶", "지각 조심 ⏰", "배터리 충전 ⚡", "집콕이 최고 🏠"],
+            init: () => {
+                const modal = document.createElement('div'); modal.className = 'custom-modal-overlay'; modal.onclick = () => modal.remove();
+                modal.innerHTML = `<div class="flex flex-col items-center justify-center animate-pop-in" onclick="event.stopPropagation()"><div class="tarot-card" onclick="FortuneApp.flip(this)"><div class="tarot-inner"><div class="tarot-front"><div class="text-6xl mb-4">🌟</div><h3 class="text-xl font-bold text-pink-500 mb-2">Lucky!</h3><p class="text-sm text-gray-600 px-2 break-keep" id="fortune-text"></p></div><div class="tarot-back"></div></div></div><p class="text-white mt-4 font-bold text-shadow animate-pulse">카드를 눌러서 뒤집어보세요!</p></div>`;
+                document.getElementById('modal-container').appendChild(modal);
+            },
+            flip: (el) => { if(el.classList.contains('flipped')) return; const randomFortune = FortuneApp.fortunes[Math.floor(Math.random() * FortuneApp.fortunes.length)]; document.getElementById('fortune-text').innerText = randomFortune; el.classList.add('flipped'); }
+        };
+
+        // Polaroid Widget
+        const PolaroidApp = {
+            init: () => { PolaroidApp.render(); },
+            render: () => {
+                const galleryImgs = DB.load('imgs', []);
+                // [수정] 기본 문구 변경
+                const data = DB.load('polaroid_data', { caption: '새봄이 땽' });
+                const randImg = galleryImgs.length > 0 ? galleryImgs[Math.floor(Math.random() * galleryImgs.length)] : 'https://api.dicebear.com/7.x/avataaars/svg?seed=Saebom';
+                const el = document.getElementById('polaroid-widget');
+                el.innerHTML = `
+                    <div class="aspect-square bg-gray-200 mb-2 overflow-hidden border border-gray-100">
+                        <img src="${randImg}" class="w-full h-full object-cover pointer-events-none">
+                    </div>
+                    <input class="polaroid-caption" value="${data.caption}" oninput="PolaroidApp.saveCaption(this.value)" placeholder="메모..." onclick="event.stopPropagation()">
+                `;
+            },
+            refresh: () => PolaroidApp.render(),
+            saveCaption: (val) => { const d = DB.load('polaroid_data', {}); d.caption = val; DB.save('polaroid_data', d); }
+        };
+
+        // Time Capsule App
+        const TimeCapsuleApp = {
+            init: () => { TimeCapsuleApp.render(); },
+            render: () => {
+                const el = document.getElementById('app-time-capsule'); if(!el) return;
+                let data = DB.load('time_capsule', null);
+                let content = '';
+                if (!data || !data.locked) {
+                    const msg = data ? data.msg : ''; const date = data ? data.date : '';
+                    content = `<div class="p-6 h-full flex flex-col gap-4 bg-pink-50/30"><h3 class="text-xl font-bold text-center text-orange-400">📮 미래의 나에게</h3><textarea id="tc-msg" oninput="TimeCapsuleApp.saveDraft()" class="flex-1 p-4 rounded-xl border-2 border-orange-100 resize-none text-sm leading-relaxed outline-none focus:border-orange-300" placeholder="미래의 새봄이에게 편지를 써보세요...">${msg}</textarea><div class="flex items-center gap-2"><span class="text-xs text-gray-500">개봉일:</span><input id="tc-date" type="date" class="border rounded p-1 text-sm outline-none" value="${date}" onchange="TimeCapsuleApp.saveDraft()"></div><button onclick="TimeCapsuleApp.askLock()" class="w-full bg-orange-400 text-white py-2 rounded-xl font-bold hover:bg-orange-500 transition">타임캡슐 잠그기 🔒</button></div>`;
+                } else {
+                    const now = new Date().setHours(0,0,0,0); const unlock = new Date(data.date).setHours(0,0,0,0);
+                    if (now >= unlock) {
+                        content = `<div class="p-6 h-full flex flex-col gap-4 bg-yellow-50/50 items-center justify-center capsule-unlocked"><div class="text-6xl mb-4">🎉</div><h3 class="text-xl font-bold text-orange-500">타임캡슐 도착!</h3><div class="w-full flex-1 bg-white p-4 rounded-xl shadow-inner overflow-auto text-sm text-gray-700 whitespace-pre-wrap border border-orange-100">${data.msg}</div><p class="text-xs text-gray-400">${data.date}에 봉인해제됨</p><button onclick="TimeCapsuleApp.reset()" class="text-xs text-gray-400 underline mt-2">새로 만들기</button></div>`;
+                    } else {
+                        const dDay = Math.ceil((unlock - now) / (1000 * 60 * 60 * 24));
+                        content = `<div class="p-6 h-full flex flex-col items-center justify-center bg-gray-100"><div class="capsule-lock text-6xl mb-4">🔒</div><h3 class="text-lg font-bold text-gray-500">봉인된 타임캡슐</h3><p class="text-sm text-gray-400 mt-2">D-${dDay}일 남음</p><p class="text-xs text-gray-300 mt-1">${data.date}에 열립니다.</p></div>`;
+                    }
+                }
+                el.innerHTML = content;
+            },
+            saveDraft: () => { const msg = document.getElementById('tc-msg').value; const date = document.getElementById('tc-date').value; DB.save('time_capsule', { msg, date, locked: false }); },
+            askLock: () => {
+                const msg = document.getElementById('tc-msg').value; const date = document.getElementById('tc-date').value;
+                if(!msg.trim()) return alert('내용을 입력해주세요!'); if(!date) return alert('날짜를 선택해주세요!');
+                const sel = new Date(date); sel.setHours(0,0,0,0); const now = new Date(); now.setHours(0,0,0,0);
+                if(sel <= now) return alert('미래의 날짜를 선택해주세요!');
+                const modal = document.createElement('div'); modal.className = 'custom-modal-overlay';
+                modal.innerHTML = `<div class="custom-modal-box"><h3 class="text-lg font-bold mb-3 text-pink-500 text-center">🔒 정말 잠글까요?</h3><p class="text-sm text-gray-600 text-center mb-4">${date}까지 열어볼 수 없어요!<br>신중하게 결정해주세요.</p><div class="flex justify-center gap-3"><button onclick="this.closest('.custom-modal-overlay').remove()" class="px-4 py-2 rounded text-gray-500 bg-gray-100">취소</button><button onclick="TimeCapsuleApp.confirmLock()" class="px-4 py-2 rounded bg-orange-400 text-white font-bold">확인</button></div></div>`;
+                document.getElementById('modal-container').appendChild(modal);
+            },
+            confirmLock: () => { const msg = document.getElementById('tc-msg').value; const date = document.getElementById('tc-date').value; DB.save('time_capsule', { msg, date, locked: true }); document.querySelector('.custom-modal-overlay').remove(); TimeCapsuleApp.render(); },
+            reset: () => { if(confirm('새로 만들까요?')) { DB.save('time_capsule', null); TimeCapsuleApp.render(); } }
+        };
+
+        // --- Editable Profile App (수정됨: 흰색 배경) ---
+        const ProfileApp = {
+            data: {
+                name: '조새봄', job: 'Web Designer', birth: '1996.11.04', mbti: 'ISFJ', live: 'Seoul', bf: '♥건용 (Since 22.10.01)', fav: '토끼, 핑크, 레이스, 게임', img: 'https://api.iconify.design/noto:rabbit-face.svg'
+            },
+            init: () => {
+                const saved = DB.load('profile_data_v2', ProfileApp.data);
+                ProfileApp.data = { ...ProfileApp.data, ...saved };
+                const el = document.getElementById('app-profile');
+                if(!el) return;
+                
+                // 배경: 다시 흰색으로!
+                el.innerHTML = `
+                    <div class="flex flex-col items-center p-8 h-full overflow-y-auto custom-scrollbar bg-white">
+                        
+                        <!-- 사진 변경 -->
+                        <div class="relative w-40 h-40 mb-6 group cursor-pointer" onclick="document.getElementById('profile-file-input').click()">
+                            <div class="w-full h-full rounded-full overflow-hidden border-[5px] border-pink-100 shadow-lg bg-pink-50 transition-transform transform group-hover:scale-105">
+                                <img id="profile-img-display" src="${ProfileApp.data.img}" class="w-full h-full object-cover">
+                            </div>
+                            <div class="absolute inset-0 rounded-full flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity text-white font-bold text-sm">
+                                사진 변경 📷
+                            </div>
+                        </div>
+                        <input type="file" id="profile-file-input" class="hidden" accept="image/*" onchange="ProfileApp.updateImage(this)">
+
+                        <!-- 이름 & 직업 (수정 가능) -->
+                        <h1 class="text-3xl font-bold text-gray-800 mb-2 font-sans outline-none border-b border-transparent focus:border-pink-200" contenteditable="true" oninput="ProfileApp.save('name', this.innerText)">${ProfileApp.data.name}</h1>
+                        <div class="text-pink-500 font-bold mb-8 uppercase tracking-widest bg-pink-50 px-3 py-1 rounded-full text-sm outline-none focus:ring-2 focus:ring-pink-300" contenteditable="true" oninput="ProfileApp.save('job', this.innerText)">${ProfileApp.data.job}</div>
+
+                        <!-- 정보 리스트 (수정 가능) -->
+                        <div class="w-full space-y-3 px-4">
+                            ${ProfileApp.renderItem('BIRTH', 'birth')}
+                            ${ProfileApp.renderItem('MBTI', 'mbti')}
+                            ${ProfileApp.renderItem('LIVE', 'live')}
+                            ${ProfileApp.renderItem('BF', 'bf')}
+                            ${ProfileApp.renderItem('FAV', 'fav')}
+                        </div>
+                    </div>
+                `;
+            },
+            renderItem: (label, key) => {
+                return `
+                    <div class="flex justify-between items-center border-b border-pink-50 pb-2 text-sm">
+                        <span class="font-bold text-pink-400 w-16">${label}</span>
+                        <span class="flex-1 text-right text-gray-600 font-medium outline-none border-b border-transparent focus:border-pink-200 transition-colors" contenteditable="true" oninput="ProfileApp.save('${key}', this.innerText)">${ProfileApp.data[key]}</span>
+                    </div>
+                `;
+            },
+            save: (key, val) => {
+                ProfileApp.data[key] = val;
+                DB.save('profile_data_v2', ProfileApp.data);
+            },
+            updateImage: (input) => {
+                if (input.files && input.files[0]) {
+                    Utils.readFile(input.files[0], (dataUrl) => {
+                        ProfileApp.data.img = dataUrl;
+                        document.getElementById('profile-img-display').src = dataUrl;
+                        DB.save('profile_data_v2', ProfileApp.data);
+                    });
+                }
             }
         };
 
-        // --- NEW: Diary Viewer App (포토 캘린더) ---
+        // --- Diary Viewer ---
         const DiaryViewer = {
-            date: new Date(),
-            init: () => { DiaryViewer.render(); },
-            formatYMD: (y,m,d) => `${y}-${m}-${d}`,
-            changeDate: (y, m) => { DiaryViewer.date.setFullYear(y); DiaryViewer.date.setMonth(m-1); DiaryViewer.render(); },
-            
+            date: new Date(), init: () => { DiaryViewer.render(); }, formatYMD: (y,m,d) => `${y}-${m}-${d}`, changeDate: (y, m) => { DiaryViewer.date.setFullYear(y); DiaryViewer.date.setMonth(m-1); DiaryViewer.render(); },
             render: () => {
                 const el = document.getElementById('app-diary-viewer'); if(!el) return;
                 const y = DiaryViewer.date.getFullYear(), m = DiaryViewer.date.getMonth();
                 const diaries = DB.load('planner_diary_v2', {});
-
-                let h = `
-                    <div class="flex flex-col h-full bg-white/50">
-                        <div class="flex justify-between items-center p-4 bg-white/50 border-b border-pink-100">
-                            <h2 class="text-xl font-bold text-pink-500">📖 그림일기 모아보기</h2>
-                            <div class="flex gap-2">
-                                <select onchange="DiaryViewer.changeDate(this.value, ${m+1})" class="bg-white border-2 border-pink-100 rounded-lg px-2 py-1 text-sm text-gray-600 outline-none">${Array.from({length: 11}, (_, i) => y - 5 + i).map(yy => `<option value="${yy}" ${yy===y?'selected':''}>${yy}년</option>`).join('')}</select>
-                                <select onchange="DiaryViewer.changeDate(${y}, this.value)" class="bg-white border-2 border-pink-100 rounded-lg px-2 py-1 text-sm text-gray-600 outline-none">${Array.from({length: 12}, (_, i) => i + 1).map(mm => `<option value="${mm}" ${mm===m+1?'selected':''}>${mm}월</option>`).join('')}</select>
-                            </div>
-                        </div>
-                        <div class="photo-calendar-grid flex-1 overflow-auto">
-                `;
-
+                let h = `<div class="flex flex-col h-full bg-white/50"><div class="flex justify-between items-center p-4 bg-white/50 border-b border-pink-100"><h2 class="text-xl font-bold text-pink-500 font-sans">📖 그림일기 모아보기</h2><div class="flex gap-2"><select onchange="DiaryViewer.changeDate(this.value, ${m+1})" class="bg-white border-2 border-pink-100 rounded-lg px-2 py-1 text-sm text-gray-600 outline-none">${Array.from({length: 11}, (_, i) => y - 5 + i).map(yy => `<option value="${yy}" ${yy===y?'selected':''}>${yy}년</option>`).join('')}</select><select onchange="DiaryViewer.changeDate(${y}, this.value)" class="bg-white border-2 border-pink-100 rounded-lg px-2 py-1 text-sm text-gray-600 outline-none">${Array.from({length: 12}, (_, i) => i + 1).map(mm => `<option value="${mm}" ${mm===m+1?'selected':''}>${mm}월</option>`).join('')}</select></div></div><div class="photo-calendar-grid flex-1 overflow-auto">`;
                 const first = new Date(y, m, 1).getDay(); const last = new Date(y, m + 1, 0).getDate();
                 for(let i=0; i<first; i++) h += `<div></div>`;
-                
                 for(let i=1; i<=last; i++) {
-                    const dateKey = DiaryViewer.formatYMD(y, m+1, i);
-                    const entry = diaries[dateKey];
-                    // 이미지가 있으면 이미지 표시, 없으면 토끼 표시 (일기 있으면)
+                    const dateKey = DiaryViewer.formatYMD(y, m+1, i); const entry = diaries[dateKey];
                     let content = `<div class="no-img opacity-20"></div>`;
-                    if (entry) {
-                        if (entry.img) {
-                            content = `<img src="${entry.img}">`;
-                        } else {
-                            content = `<div class="no-img">🐰</div>`; // 이미지 없는 일기
-                        }
-                    }
-
-                    h += `
-                        <div class="photo-calendar-day" onclick="DiaryViewer.viewEntry('${dateKey}', ${i})">
-                            <span class="day-num">${i}</span>
-                            ${content}
-                        </div>
-                    `;
+                    if (entry) { if (entry.img) content = `<img src="${entry.img}">`; else content = `<div class="no-img">🐰</div>`; }
+                    h += `<div class="photo-calendar-day" onclick="DiaryViewer.viewEntry('${dateKey}', ${i})"><span class="day-num">${i}</span>${content}</div>`;
                 }
-                h += `</div></div>`;
-                el.innerHTML = h;
+                h += `</div></div>`; el.innerHTML = h;
             },
-            
             viewEntry: (dateKey, day) => {
-                const diaries = DB.load('planner_diary_v2', {});
-                const entry = diaries[dateKey];
-                if (!entry) return alert('이 날은 일기가 없어! 😢');
-                
-                const modal = document.createElement('div');
-                modal.className = 'custom-modal-overlay';
-                modal.onclick = () => modal.remove();
-                
-                modal.innerHTML = `
-                    <div class="custom-modal-box bg-white p-4 rounded-xl shadow-xl w-[400px]" onclick="event.stopPropagation()">
-                        <div class="flex justify-between items-center mb-3 border-b pb-2">
-                            <span class="font-bold text-pink-500">${day}일의 그림일기</span>
-                            <div class="flex gap-2 text-lg"><span>${entry.weather}</span><span>${entry.mood}</span></div>
-                        </div>
-                        <div class="w-full aspect-[4/3] bg-gray-50 rounded-lg overflow-hidden mb-3 border border-gray-100 flex items-center justify-center">
-                            ${entry.img ? `<img src="${entry.img}" class="w-full h-full object-cover">` : '<span class="text-gray-300">사진 없음</span>'}
-                        </div>
-                        <div class="p-3 bg-pink-50/50 rounded-lg text-sm text-gray-700 min-h-[100px] whitespace-pre-wrap leading-relaxed">${entry.text || '내용 없음'}</div>
-                        <div class="text-center mt-3">
-                            <button onclick="this.closest('.custom-modal-overlay').remove()" class="text-xs text-gray-400 underline">닫기</button>
-                        </div>
-                    </div>
-                `;
+                const diaries = DB.load('planner_diary_v2', {}); const entry = diaries[dateKey]; if (!entry) return alert('이 날은 일기가 없어! 😢');
+                const modal = document.createElement('div'); modal.className = 'custom-modal-overlay'; modal.onclick = () => modal.remove();
+                modal.innerHTML = `<div class="custom-modal-box bg-white p-4 rounded-xl shadow-xl w-[400px]" onclick="event.stopPropagation()"><div class="flex justify-between items-center mb-3 border-b pb-2"><span class="font-bold text-pink-500 font-sans text-xl">${day}일의 그림일기</span><div class="flex gap-2 text-lg"><span>${entry.weather}</span><span>${entry.mood}</span></div></div><div class="w-full aspect-[4/3] bg-gray-50 rounded-lg overflow-hidden mb-3 border border-gray-100 flex items-center justify-center">${entry.img ? `<img src="${entry.img}" class="w-full h-full object-cover">` : '<span class="text-gray-300">사진 없음</span>'}</div><div class="p-3 bg-pink-50/50 rounded-lg text-sm text-gray-700 min-h-[100px] whitespace-pre-wrap leading-relaxed font-sans text-lg">${entry.text || '내용 없음'}</div><div class="text-center mt-3"><button onclick="this.closest('.custom-modal-overlay').remove()" class="text-xs text-gray-400 underline">닫기</button></div></div>`;
                 document.getElementById('modal-container').appendChild(modal);
             }
         };
 
-        // --- 4. Planner App ---
         const Planner = {
-            date: new Date(), view: 'monthly',
-            icons: ['🐰', '🐤', '💖', '🎀', '🎂', '⭐', '🌸', '🧸', '🍭', '🎵'],
-            weathers: ['☀️', '☁️', '☔', '☃️'],
-            moods: ['🥰', '😐', '😭', '😡', '🥳'],
-            selectedIcon: '🐰', 
-            
-            // 일기 데이터 (임시)
-            currentDiary: { img: null, weather: '☀️', mood: '🥰' },
-
-            init: () => { Planner.render(); },
-            formatYMD: (y,m,d) => `${y}-${m}-${d}`,
-            formatMD: (m,d) => `${m}-${d}`,
-            getWeekKey: (d) => { const onejan = new Date(d.getFullYear(), 0, 1); return `${d.getFullYear()}-W${Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7)}`; },
-            closePopup: (id) => { const el = document.getElementById(id); if (el) el.remove(); },
-
+            date: new Date(), view: 'monthly', icons: ['🐰', '🐤', '💖', '🎀', '🎂', '⭐', '🌸', '🧸', '🍭', '🎵'], weathers: ['☀️', '☁️', '☔', '☃️'], moods: ['🥰', '😐', '😭', '😡', '🥳'], selectedIcon: '🐰', currentDiary: { img: null, weather: '☀️', mood: '🥰' },
+            init: () => { Planner.render(); }, formatYMD: (y,m,d) => `${y}-${m}-${d}`, formatMD: (m,d) => `${m}-${d}`, getWeekKey: (d) => { const onejan = new Date(d.getFullYear(), 0, 1); return `${d.getFullYear()}-W${Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7)}`; }, closePopup: (id) => { const el = document.getElementById(id); if (el) el.remove(); },
             render: () => {
                 const el = document.getElementById('app-planner'); if(!el) return;
                 const y = Planner.date.getFullYear(), m = Planner.date.getMonth();
-                const diary = DB.load('planner_diary_v2', {}); // Data Structure Changed
-                const schedule = DB.load('planner_schedule', {});
-                const yearly = DB.load('planner_yearly', {});
-                const weekly = DB.load('planner_weekly', {});
-
+                const diary = DB.load('planner_diary_v2', {}); const schedule = DB.load('planner_schedule', {}); const yearly = DB.load('planner_yearly', {}); const weekly = DB.load('planner_weekly_todo', {});
                 let h = `<div class="flex flex-col h-full bg-white/50"><div class="flex gap-2 p-3 border-b shrink-0">${['monthly','weekly','yearly'].map(v => `<button onclick="Planner.view='${v}';Planner.render()" class="flex-1 py-2 rounded-lg text-sm font-bold capitalize transition ${Planner.view===v?'bg-pink-400 text-white shadow-md':'text-gray-400 hover:bg-pink-50'}">${v}</button>`).join('')}</div><div class="flex-1 overflow-hidden relative">`;
-
                 if(Planner.view === 'monthly') {
                     h += `<div class="flex flex-col h-full"><div class="flex justify-between items-center p-4 bg-white/50"><div class="flex gap-2"><select onchange="Planner.changeDate(this.value, ${m+1})" class="bg-white border-2 border-pink-100 rounded-lg px-2 py-1 text-sm font-bold text-gray-700 outline-none hover:border-pink-300">${Array.from({length: 11}, (_, i) => y - 5 + i).map(yy => `<option value="${yy}" ${yy===y?'selected':''}>${yy}년</option>`).join('')}</select><select onchange="Planner.changeDate(${y}, this.value)" class="bg-white border-2 border-pink-100 rounded-lg px-2 py-1 text-sm font-bold text-gray-700 outline-none hover:border-pink-300">${Array.from({length: 12}, (_, i) => i + 1).map(mm => `<option value="${mm}" ${mm===m+1?'selected':''}>${mm}월</option>`).join('')}</select></div><button onclick="Planner.today()" class="bg-pink-400 text-white px-4 py-1.5 rounded-full text-sm font-bold shadow-sm hover:bg-pink-500 transition">오늘</button></div><div class="calendar-grid px-4 pb-2">${['SUN','MON','TUE','WED','THU','FRI','SAT'].map((d,i)=>`<div class="text-center text-[10px] font-bold ${i===0?'text-red-400':(i===6?'text-blue-400':'text-gray-400')}">${d}</div>`).join('')}</div><div class="calendar-grid flex-1 overflow-auto px-4 pb-4">`;
-                    const first = new Date(y, m, 1).getDay(); const last = new Date(y, m + 1, 0).getDate();
-                    for(let i=0; i<first; i++) h += `<div></div>`;
-                    const now = new Date();
-                    for(let i=1; i<=last; i++) {
-                        const dateKey = Planner.formatYMD(y, m+1, i);
-                        const yearKey = Planner.formatMD(m+1, i);
-                        const isT = now.getFullYear()===y && now.getMonth()===m && now.getDate()===i;
-                        const anniv = yearly[yearKey]; const scheds = schedule[dateKey] || [];
-                        const hasDiary = diary[dateKey] ? true : false;
+                    const first = new Date(y, m, 1).getDay(); const last = new Date(y, m + 1, 0).getDate(); for(let i=0; i<first; i++) h += `<div></div>`;
+                    const now = new Date(); for(let i=1; i<=last; i++) {
+                        const dateKey = Planner.formatYMD(y, m+1, i); const yearKey = Planner.formatMD(m+1, i); const isT = now.getFullYear()===y && now.getMonth()===m && now.getDate()===i; const anniv = yearly[yearKey]; const scheds = schedule[dateKey] || []; const hasDiary = diary[dateKey] ? true : false;
                         h += `<div onclick="Planner.openDatePopup(${y},${m},${i})" class="calendar-day ${isT?'today':''}"><div class="flex justify-between items-start"><span class="day-num text-sm font-bold ${isT?'':(new Date(y,m,i).getDay()===0?'text-red-500':(new Date(y,m,i).getDay()===6?'text-blue-500':'text-gray-700'))}">${i}</span>${hasDiary ? '<span class="text-sm">🐰</span>' : ''}</div><div class="flex flex-col gap-0.5 mt-1 overflow-hidden">${anniv ? `<div class="schedule-item yearly">🎂 ${anniv}</div>` : ''}${scheds.map(s => `<div class="schedule-item monthly">${s}</div>`).join('')}</div></div>`;
-                    }
-                    h += `</div></div>`;
+                    } h += `</div></div>`;
                 }
                 else if(Planner.view === 'weekly') {
                     const curr = new Date(Planner.date); const day = curr.getDay(); const start = new Date(curr.setDate(curr.getDate() - day));
-                    h += `<div class="flex flex-col h-full bg-pink-50/50 p-4 overflow-auto"><div class="flex justify-center items-center gap-4 mb-6"><button onclick="Planner.moveWeek(-7)"><i class="fas fa-chevron-left text-pink-300"></i></button><span class="text-lg font-bold text-pink-500 bg-white px-4 py-1 rounded-full shadow-sm border border-pink-100">${start.getMonth()+1}월 ${Math.ceil(start.getDate()/7)}주차 Weekly</span><button onclick="Planner.moveWeek(7)"><i class="fas fa-chevron-right text-pink-300"></i></button><button onclick="Planner.thisWeek()" class="bg-pink-300 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm hover:bg-pink-400 absolute right-6">이번 주</button></div><div class="grid grid-cols-1 gap-3">`;
+                    h += `<div class="flex flex-col h-full bg-pink-50/50 p-4 overflow-auto"><div class="flex justify-center items-center gap-4 mb-6"><button onclick="Planner.moveWeek(-7)"><i class="fas fa-chevron-left text-pink-300"></i></button><span class="text-lg font-bold text-pink-500 bg-white px-4 py-1 rounded-full shadow-sm border border-pink-100 font-sans">${start.getMonth()+1}월 ${Math.ceil(start.getDate()/7)}주차 Weekly</span><button onclick="Planner.moveWeek(7)"><i class="fas fa-chevron-right text-pink-300"></i></button><button onclick="Planner.thisWeek()" class="bg-pink-300 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm hover:bg-pink-400 absolute right-6">이번 주</button></div><div class="grid grid-cols-1 gap-3">`;
                     const weekKey = Planner.getWeekKey(start); const weekData = weekly[weekKey] || {};
                     ['SUN','MON','TUE','WED','THU','FRI','SAT'].forEach((dname, idx) => {
-                        const d = new Date(start); d.setDate(start.getDate() + idx); const isToday = new Date().toDateString() === d.toDateString(); const val = weekData[idx] || '';
-                        h += `<div class="flex bg-white rounded-xl shadow-sm border ${isToday?'border-pink-400 ring-1 ring-pink-200':'border-pink-50'} overflow-hidden min-h-[80px]"><div class="w-14 bg-pink-50 flex flex-col items-center justify-center border-r border-pink-100"><span class="text-xs font-bold ${idx===0?'text-red-400':(idx===6?'text-blue-400':'text-gray-500')}">${dname}</span><span class="text-xl font-bold text-gray-700">${d.getDate()}</span></div><textarea onchange="Planner.saveWeekly('${weekKey}', ${idx}, this.value)" class="flex-1 p-3 text-sm resize-none outline-none text-gray-600 bg-transparent placeholder-pink-200" placeholder="이번 주 계획...">${val}</textarea></div>`;
-                    });
-                    h += `</div></div>`;
+                        const d = new Date(start); d.setDate(start.getDate() + idx); const isToday = new Date().toDateString() === d.toDateString(); const val = weekData[idx] || []; const todos = Array.isArray(val) ? val : [];
+                        h += `<div class="flex flex-col bg-white rounded-xl shadow-sm border ${isToday?'border-pink-400 ring-1 ring-pink-200':'border-pink-50'} overflow-hidden min-h-[120px]"><div class="flex items-center justify-between bg-pink-50/50 px-3 py-2 border-b border-pink-100"><div class="flex items-center gap-2"><span class="text-xs font-bold ${idx===0?'text-red-400':(idx===6?'text-blue-400':'text-gray-500')}">${dname}</span><span class="text-lg font-bold text-gray-700">${d.getDate()}</span></div></div><div class="p-2 space-y-1 flex-1">${todos.map(t => `<div class="flex items-center gap-2 group hover:bg-pink-50/30 p-1 rounded transition"><input type="checkbox" ${t.done?'checked':''} onclick="Planner.toggleWeeklyTodo('${weekKey}', ${idx}, ${t.id})" class="accent-pink-400 cursor-pointer w-4 h-4 rounded-full border-pink-200"><span class="flex-1 text-sm ${t.done?'line-through text-gray-300':'text-gray-600'}">${t.text}</span><button onclick="Planner.deleteWeeklyTodo('${weekKey}', ${idx}, ${t.id})" class="text-gray-300 hover:text-red-400 opacity-0 group-hover:opacity-100 transition px-1"><i class="fas fa-times"></i></button></div>`).join('')}${todos.length === 0 ? '<div class="text-xs text-gray-300 text-center py-2 italic">할 일을 추가해보세요!</div>' : ''}</div><div class="border-t border-pink-50 p-2 flex gap-1 bg-gray-50/30"><input type="text" class="flex-1 text-xs p-1.5 bg-white border border-pink-100 rounded focus:border-pink-300 outline-none" placeholder="할 일 입력..." onkeypress="if(event.key==='Enter') Planner.addWeeklyTodo('${weekKey}', ${idx}, this)"><button onclick="Planner.addWeeklyTodo('${weekKey}', ${idx}, this.previousElementSibling)" class="bg-pink-400 text-white px-2 rounded hover:bg-pink-500 text-xs"><i class="fas fa-plus"></i></button></div></div>`;
+                    }); h += `</div></div>`;
                 }
                 else if(Planner.view === 'yearly') {
-                    h += `<div class="flex flex-col h-full bg-pink-50/50 p-4 overflow-auto"><div class="flex justify-center items-center gap-4 mb-4"><button onclick="Planner.changeDate(${y-1}, 1)" class="text-gray-400"><i class="fas fa-chevron-left"></i></button><h2 class="text-2xl font-bold text-pink-500">${y}년 <span class="text-sm font-normal text-gray-500">(기념일)</span></h2><button onclick="Planner.changeDate(${y+1}, 1)" class="text-gray-400"><i class="fas fa-chevron-right"></i></button></div><div class="grid grid-cols-3 gap-4">`;
-                    for(let i=0; i<12; i++) {
-                        h += `<div class="yearly-month"><div class="text-center font-bold text-gray-700 mb-2 border-b border-pink-100 pb-1">${i+1}월</div><div class="yearly-grid">`;
-                        const last = new Date(y, i+1, 0).getDate(); const offset = new Date(y, i, 1).getDay();
-                        for(let k=0; k<offset; k++) h+=`<div></div>`;
-                        for(let d=1; d<=last; d++) { const yKey = Planner.formatMD(i+1, d); const hasAnniv = yearly[yKey]; h += `<div onclick="Planner.openYearlyInput(${i+1}, ${d})" class="yearly-day ${hasAnniv?'has-anniversary':''}" title="${hasAnniv||''}">${d}</div>`; }
-                        h += `</div></div>`;
-                    }
-                    h += `</div><div class="text-center text-xs text-gray-400 mt-4">* 날짜를 클릭하여 매년 반복되는 기념일을 등록하세요.</div></div>`;
+                    h += `<div class="flex flex-col h-full bg-pink-50/50 p-4 overflow-auto"><div class="flex justify-center items-center gap-4 mb-4"><button onclick="Planner.changeDate(${y-1}, 1)" class="text-gray-400"><i class="fas fa-chevron-left"></i></button><h2 class="text-2xl font-bold text-pink-500 font-sans">${y}년 <span class="text-sm font-normal text-gray-500">(기념일)</span></h2><button onclick="Planner.changeDate(${y+1}, 1)" class="text-gray-400"><i class="fas fa-chevron-right"></i></button></div><div class="grid grid-cols-3 gap-4">`;
+                    for(let i=0; i<12; i++) { h += `<div class="yearly-month"><div class="text-center font-bold text-gray-700 mb-2 border-b border-pink-100 pb-1 font-sans text-lg">${i+1}월</div><div class="yearly-grid">`; const last = new Date(y, i+1, 0).getDate(); const offset = new Date(y, i, 1).getDay(); for(let k=0; k<offset; k++) h+=`<div></div>`; for(let d=1; d<=last; d++) { const yKey = Planner.formatMD(i+1, d); const hasAnniv = yearly[yKey]; h += `<div onclick="Planner.openYearlyInput(${i+1}, ${d})" class="yearly-day ${hasAnniv?'has-anniversary':''}" title="${hasAnniv||''}">${d}</div>`; } h += `</div></div>`; } h += `</div><div class="text-center text-xs text-gray-400 mt-4">* 날짜를 클릭하여 매년 반복되는 기념일을 등록하세요.</div></div>`;
                 }
                 h += `</div></div>`; el.innerHTML = h;
             },
-
-            // --- Actions ---
             moveMonth: (d) => { Planner.date.setMonth(Planner.date.getMonth() + d); Planner.render(); },
             moveWeek: (d) => { Planner.date.setDate(Planner.date.getDate() + d); Planner.render(); },
             changeDate: (y, m) => { Planner.date.setFullYear(y); Planner.date.setMonth(m-1); Planner.render(); },
             today: () => { Planner.date = new Date(); Planner.view = 'monthly'; Planner.render(); },
             thisWeek: () => { Planner.date = new Date(); Planner.render(); },
-            saveWeekly: (weekKey, dayIdx, val) => { const data = DB.load('planner_weekly', {}); if(!data[weekKey]) data[weekKey] = {}; data[weekKey][dayIdx] = val; DB.save('planner_weekly', data); },
-
-            openYearlyInput: (m, d) => {
-                Planner.closePopup('input-modal'); const key = Planner.formatMD(m, d); const data = DB.load('planner_yearly', {}); const current = data[key] || '';
-                const modal = document.createElement('div'); modal.id = 'input-modal'; modal.className = 'custom-modal-overlay'; modal.onmousedown = (e) => e.stopPropagation();
-                modal.innerHTML = `<div class="custom-modal-box"><h3 class="text-lg font-bold mb-3 text-pink-600">🎂 ${m}월 ${d}일 기념일</h3><input id="modal-input" type="text" value="${current}" class="w-full border-2 border-pink-100 rounded p-2 mb-4 text-sm focus:border-pink-300 outline-none" placeholder="기념일 입력..."><div class="flex justify-end gap-2"><button onclick="Planner.closePopup('input-modal')" class="px-3 py-1 rounded text-sm text-gray-500 hover:bg-gray-100">취소</button><button onclick="Planner.saveYearly('${key}')" class="px-3 py-1 rounded text-sm bg-pink-400 text-white font-bold hover:bg-pink-500 shadow">저장</button></div></div>`;
-                document.getElementById('modal-container').appendChild(modal); document.getElementById('modal-input').focus();
-            },
-            saveYearly: (key) => { const val = document.getElementById('modal-input').value; const data = DB.load('planner_yearly', {}); if(val) data[key] = val; else delete data[key]; DB.save('planner_yearly', data); Planner.closePopup('input-modal'); Planner.render(); },
-            selectIcon: (icon) => { Planner.selectedIcon = icon; document.querySelectorAll('.icon-option').forEach(el => el.classList.remove('selected')); Array.from(document.querySelectorAll('.icon-option')).find(el => el.textContent === icon).classList.add('selected'); },
-
+            addWeeklyTodo: (wk, idx, el) => { const txt=typeof el==='string'?el:el.value; if(!txt.trim())return; const d=DB.load('planner_weekly_todo',{}); if(!d[wk])d[wk]={}; if(!d[wk][idx])d[wk][idx]=[]; d[wk][idx].push({id:Date.now(),text:txt,done:false}); DB.save('planner_weekly_todo',d); Planner.render(); },
+            toggleWeeklyTodo: (wk, idx, id) => { const d=DB.load('planner_weekly_todo',{}); if(d[wk]&&d[wk][idx]){ const t=d[wk][idx].find(x=>x.id===id); if(t){t.done=!t.done; DB.save('planner_weekly_todo',d); Planner.render();} } },
+            deleteWeeklyTodo: (wk, idx, id) => { const d=DB.load('planner_weekly_todo',{}); if(d[wk]&&d[wk][idx]){ d[wk][idx]=d[wk][idx].filter(x=>x.id!==id); DB.save('planner_weekly_todo',d); Planner.render(); } },
+            openYearlyInput: (m, d) => { Planner.closePopup('input-modal'); const k=Planner.formatMD(m,d); const dta=DB.load('planner_yearly',{}); const c=dta[k]||''; const mDiv=document.createElement('div'); mDiv.id='input-modal'; mDiv.className='custom-modal-overlay'; mDiv.onmousedown=e=>e.stopPropagation(); mDiv.innerHTML=`<div class="custom-modal-box"><h3 class="text-lg font-bold mb-3 text-pink-600">🎂 ${m}월 ${d}일 기념일</h3><input id="modal-input" type="text" value="${c}" class="w-full border-2 border-pink-100 rounded p-2 mb-4 text-sm focus:border-pink-300 outline-none" placeholder="내용 입력..."><div class="flex justify-end gap-2"><button onclick="Planner.closePopup('input-modal')" class="px-3 py-1 rounded text-sm text-gray-500 hover:bg-gray-100">취소</button><button onclick="Planner.saveYearly('${k}')" class="px-3 py-1 rounded text-sm bg-pink-400 text-white font-bold hover:bg-pink-500 shadow">저장</button></div></div>`; document.getElementById('modal-container').appendChild(mDiv); document.getElementById('modal-input').focus(); },
+            saveYearly: (k) => { const v=document.getElementById('modal-input').value; const d=DB.load('planner_yearly',{}); if(v)d[k]=v; else delete d[k]; DB.save('planner_yearly',d); Planner.closePopup('input-modal'); Planner.render(); },
+            selectIcon: (ic) => { Planner.selectedIcon=ic; document.querySelectorAll('.icon-option').forEach(e=>e.classList.remove('selected')); Array.from(document.querySelectorAll('.icon-option')).find(e=>e.textContent===ic).classList.add('selected'); },
             openDatePopup: (y, m, d) => {
-                Planner.closePopup('date-popup'); const dateKey = Planner.formatYMD(y, m+1, d); Planner.selectedIcon = Planner.icons[0];
-                const modal = document.createElement('div'); modal.id = 'date-popup'; modal.className = 'custom-modal-overlay'; modal.onmousedown = (e) => e.stopPropagation();
-                modal.innerHTML = `
-                    <div id="popup-content-box" class="bg-white rounded-2xl w-96 shadow-2xl overflow-hidden animate-pop-in border-2 border-pink-100">
-                        <div class="bg-pink-300 p-4 flex justify-between items-center text-white">
-                            <h3 class="font-bold text-lg">🎀 ${m+1}월 ${d}일</h3>
-                            <button onclick="Planner.closePopup('date-popup')" class="hover:text-pink-100 text-xl"><i class="fas fa-times"></i></button>
-                        </div>
-                        <div id="view-schedule" class="p-4 flex flex-col gap-4">
-                            <div class="bg-pink-50/50 p-3 rounded-xl border border-pink-100">
-                                <h4 class="text-sm font-bold text-pink-500 mb-2">📅 핑크 일정 추가</h4>
-                                <div class="icon-selector" id="icon-container">${Planner.icons.map(icon => `<div class="icon-option ${icon===Planner.icons[0]?'selected':''}" onclick="Planner.selectIcon('${icon}')">${icon}</div>`).join('')}</div>
-                                <div class="flex gap-2">
-                                    <input id="popup-schedule-input" class="flex-1 border border-pink-200 rounded px-2 py-1 text-sm outline-none focus:border-pink-400 bg-white" placeholder="일정 입력..." onkeypress="if(event.key==='Enter') document.getElementById('btn-add-sche').click()">
-                                    <button id="btn-add-sche" class="bg-pink-400 text-white px-3 py-1 rounded text-xs hover:bg-pink-500 font-bold shadow-sm">추가</button>
-                                </div>
-                                <ul id="popup-schedule-list" class="text-sm space-y-1 mt-3 max-h-24 overflow-auto custom-scrollbar"></ul>
-                            </div>
-                            <button onclick="Planner.switchView('diary', ${y}, ${m}, ${d})" class="w-full py-2 rounded-xl bg-purple-50 text-purple-500 font-bold hover:bg-purple-100 border border-purple-100 transition">📝 그림일기 쓰러 가기</button>
-                        </div>
-                        <div id="view-diary" class="hidden p-0"></div>
-                    </div>
-                `;
-                document.getElementById('modal-container').appendChild(modal); Planner.renderScheduleList(dateKey);
-                modal.querySelector('#btn-add-sche').onclick = () => { const text = modal.querySelector('#popup-schedule-input').value; if(text) { const schedules = DB.load('planner_schedule', {}); const list = schedules[dateKey] || []; list.push(`${Planner.selectedIcon} ${text}`); schedules[dateKey] = list; DB.save('planner_schedule', schedules); modal.querySelector('#popup-schedule-input').value = ''; Planner.renderScheduleList(dateKey); Planner.render(); } };
+                Planner.closePopup('date-popup'); const dk=Planner.formatYMD(y,m+1,d); Planner.selectedIcon=Planner.icons[0];
+                const md=document.createElement('div'); md.id='date-popup'; md.className='custom-modal-overlay'; md.onmousedown=e=>e.stopPropagation();
+                md.innerHTML=`<div id="popup-content-box" class="bg-white rounded-2xl w-96 shadow-2xl overflow-hidden animate-pop-in border-2 border-pink-100"><div class="bg-pink-300 p-4 flex justify-between items-center text-white"><h3 class="font-bold text-lg font-sans">🎀 ${m+1}월 ${d}일</h3><button onclick="Planner.closePopup('date-popup')" class="hover:text-pink-100 text-xl"><i class="fas fa-times"></i></button></div><div id="view-schedule" class="p-4 flex flex-col gap-4"><div class="bg-pink-50/50 p-3 rounded-xl border border-pink-100"><h4 class="text-sm font-bold text-pink-500 mb-2">📅 핑크 일정 추가</h4><div class="icon-selector" id="icon-container">${Planner.icons.map(ic=>`<div class="icon-option ${ic===Planner.icons[0]?'selected':''}" onclick="Planner.selectIcon('${ic}')">${ic}</div>`).join('')}</div><div class="flex gap-2"><input id="popup-schedule-input" class="flex-1 border border-pink-200 rounded px-2 py-1 text-sm outline-none focus:border-pink-400 bg-white" placeholder="일정 입력..." onkeypress="if(event.key==='Enter') document.getElementById('btn-add-sche').click()"><button id="btn-add-sche" class="bg-pink-400 text-white px-3 py-1 rounded text-xs hover:bg-pink-500 font-bold shadow-sm">추가</button></div><ul id="popup-schedule-list" class="text-sm space-y-1 mt-3 max-h-24 overflow-auto custom-scrollbar"></ul></div><button onclick="Planner.switchView('diary', ${y}, ${m}, ${d})" class="w-full py-2 rounded-xl bg-purple-50 text-purple-500 font-bold hover:bg-purple-100 border border-purple-100 transition">📝 그림일기 쓰러 가기</button></div><div id="view-diary" class="hidden p-0"></div></div>`;
+                document.getElementById('modal-container').appendChild(md); Planner.renderScheduleList(dk);
+                md.querySelector('#btn-add-sche').onclick=()=>{ const t=md.querySelector('#popup-schedule-input').value; if(t){ const s=DB.load('planner_schedule',{}); const l=s[dk]||[]; l.push(`${Planner.selectedIcon} ${t}`); s[dk]=l; DB.save('planner_schedule',s); md.querySelector('#popup-schedule-input').value=''; Planner.renderScheduleList(dk); Planner.render(); } };
             },
-
-            renderScheduleList: (dateKey) => {
-                const schedules = DB.load('planner_schedule', {}); const list = schedules[dateKey] || [];
-                const ul = document.getElementById('popup-schedule-list');
-                if(ul) ul.innerHTML = list.map((s, idx) => `<li class="flex justify-between items-center bg-white px-2 py-1 rounded border border-pink-100 mb-1 text-pink-600"><span>${s}</span><button onclick="Planner.removeSche('${dateKey}', ${idx})" class="text-red-300 hover:text-red-500"><i class="fas fa-times"></i></button></li>`).join('');
+            renderScheduleList: (dk) => { const s=DB.load('planner_schedule',{}); const l=s[dk]||[]; const ul=document.getElementById('popup-schedule-list'); if(ul) ul.innerHTML=l.map((v,i)=>`<li class="flex justify-between items-center bg-white px-2 py-1 rounded border border-pink-100 mb-1 text-pink-600"><span>${v}</span><button onclick="Planner.removeSche('${dk}',${i})" class="text-red-300 hover:text-red-500"><i class="fas fa-times"></i></button></li>`).join(''); },
+            removeSche: (dk, i) => { const s=DB.load('planner_schedule',{}); if(s[dk]){ s[dk].splice(i,1); DB.save('planner_schedule',s); Planner.renderScheduleList(dk); Planner.render(); } },
+            switchView: (t,y,m,d) => {
+                const b=document.getElementById('popup-content-box'), s=document.getElementById('view-schedule'), dv=document.getElementById('view-diary'), dk=Planner.formatYMD(y,m+1,d);
+                if(t==='diary'){
+                    b.classList.add('diary-modal'); s.classList.add('hidden'); dv.classList.remove('hidden');
+                    const ds=DB.load('planner_diary_v2',{}); const e=ds[dk]||{img:null,weather:'☀️',mood:'🥰',text:''}; Planner.currentDiary=e;
+                    dv.innerHTML=`<div class="p-4 flex flex-col gap-3 h-full"><div class="picture-frame" onclick="document.getElementById('diary-img-upload').click()">${e.img?`<img src="${e.img}">`:`<div class="text-center text-gray-400 text-sm"><i class="fas fa-camera text-2xl mb-1"></i><br>오늘의 사진을<br>붙여주세요</div>`}</div><input type="file" id="diary-img-upload" class="hidden" accept="image/*" onchange="Planner.handleDiaryImage(this)"><div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-100"><div class="meta-selector">${Planner.weathers.map(w=>`<div class="meta-icon ${w===e.weather?'selected':''}" onclick="Planner.setMeta('weather','${w}')">${w}</div>`).join('')}</div><div class="w-px h-6 bg-gray-200"></div><div class="meta-selector">${Planner.moods.map(mo=>`<div class="meta-icon ${mo===e.mood?'selected':''}" onclick="Planner.setMeta('mood','${mo}')">${mo}</div>`).join('')}</div></div><textarea id="diary-text" class="lined-paper h-32 text-sm text-gray-700 font-sans text-lg" placeholder="오늘 하루는 어땠나요?">${e.text||''}</textarea><div class="flex justify-between mt-2"><button onclick="Planner.switchView('schedule',${y},${m},${d})" class="text-gray-400 text-xs underline">일정으로 돌아가기</button><button onclick="Planner.saveDiary('${dk}')" class="bg-pink-400 text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm hover:bg-pink-500">저장</button></div></div>`;
+                } else { b.classList.remove('diary-modal'); s.classList.remove('hidden'); dv.classList.add('hidden'); }
             },
-
-            removeSche: (dKey, idx) => {
-                const s = DB.load('planner_schedule', {}); if(s[dKey]) { s[dKey].splice(idx, 1); DB.save('planner_schedule', s); Planner.renderScheduleList(dKey); Planner.render(); }
-            },
-
-            switchView: (target, y, m, d) => {
-                const box = document.getElementById('popup-content-box'); const schedView = document.getElementById('view-schedule'); const diaryView = document.getElementById('view-diary'); const dateKey = Planner.formatYMD(y, m+1, d);
-                if(target === 'diary') {
-                    box.classList.add('diary-modal'); schedView.classList.add('hidden'); diaryView.classList.remove('hidden');
-                    const diaries = DB.load('planner_diary_v2', {}); const entry = diaries[dateKey] || { img: null, weather: '☀️', mood: '🥰', text: '' }; Planner.currentDiary = entry;
-                    diaryView.innerHTML = `
-                        <div class="p-4 flex flex-col gap-3 h-full">
-                            <div class="picture-frame" onclick="document.getElementById('diary-img-upload').click()">${entry.img ? `<img src="${entry.img}">` : `<div class="text-center text-gray-400 text-sm"><i class="fas fa-camera text-2xl mb-1"></i><br>오늘의 사진을<br>붙여주세요</div>`}</div><input type="file" id="diary-img-upload" class="hidden" accept="image/*" onchange="Planner.handleDiaryImage(this)">
-                            <div class="flex justify-between items-center bg-gray-50 p-2 rounded-lg border border-gray-100">
-                                <div class="meta-selector">${Planner.weathers.map(w => `<div class="meta-icon ${w===entry.weather?'selected':''}" onclick="Planner.setMeta('weather', '${w}')">${w}</div>`).join('')}</div>
-                                <div class="w-px h-6 bg-gray-200"></div>
-                                <div class="meta-selector">${Planner.moods.map(mo => `<div class="meta-icon ${mo===entry.mood?'selected':''}" onclick="Planner.setMeta('mood', '${mo}')">${mo}</div>`).join('')}</div>
-                            </div>
-                            <textarea id="diary-text" class="lined-paper h-32 text-sm text-gray-700" placeholder="오늘 하루는 어땠나요?">${entry.text || ''}</textarea>
-                            <div class="flex justify-between mt-2"><button onclick="Planner.switchView('schedule', ${y}, ${m}, ${d})" class="text-gray-400 text-xs underline">일정으로 돌아가기</button><button onclick="Planner.saveDiary('${dateKey}')" class="bg-pink-400 text-white px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm hover:bg-pink-500">저장</button></div>
-                        </div>`;
-                } else { box.classList.remove('diary-modal'); schedView.classList.remove('hidden'); diaryView.classList.add('hidden'); }
-            },
-
-            handleDiaryImage: (input) => { if(input.files && input.files[0]) { Utils.readFile(input.files[0], (base64) => { Planner.currentDiary.img = base64; document.querySelector('.picture-frame').innerHTML = `<img src="${base64}">`; }); } },
-            setMeta: (type, val) => { Planner.currentDiary[type] = val; Array.from(document.querySelectorAll(`.meta-selector .meta-icon`)).filter(el => (type==='weather'?Planner.weathers:Planner.moods).includes(el.innerText)).forEach(el => { if(el.innerText === val) el.classList.add('selected'); else el.classList.remove('selected'); }); },
-            
-            saveDiary: (dateKey) => {
-                const text = document.getElementById('diary-text').value; Planner.currentDiary.text = text;
-                const diaries = DB.load('planner_diary_v2', {}); diaries[dateKey] = Planner.currentDiary; DB.save('planner_diary_v2', diaries);
-                alert('일기가 저장되었어! 💖'); Planner.render(); 
-                Planner.closePopup('date-popup'); // 자동 닫기 추가
-            }
+            handleDiaryImage: (ip) => { if(ip.files&&ip.files[0]) Utils.readFile(ip.files[0], b64=>{ Planner.currentDiary.img=b64; document.querySelector('.picture-frame').innerHTML=`<img src="${b64}">`; }); },
+            setMeta: (type, val) => { Planner.currentDiary[type]=val; Array.from(document.querySelectorAll(`.meta-selector .meta-icon`)).filter(el=>(type==='weather'?Planner.weathers:Planner.moods).includes(el.innerText)).forEach(el=>{ if(el.innerText===val)el.classList.add('selected'); else el.classList.remove('selected'); }); },
+            saveDiary: (dk) => { const txt=document.getElementById('diary-text').value; Planner.currentDiary.text=txt; const ds=DB.load('planner_diary_v2',{}); ds[dk]=Planner.currentDiary; DB.save('planner_diary_v2',ds); alert('일기가 저장되었어! 💖'); Planner.render(); Planner.closePopup('date-popup'); }
         };
 
         // --- 기타 앱들 ---
         const Apps = {
-            notepad: {
-                t: '✏️ 메모장', w: 400, h: 500, c: `<div id="app-notepad" class="h-full flex flex-col bg-pink-50/30"></div>`,
-                run: () => {
-                    const render = () => {
-                        const list = DB.load('memos', []); const el = document.getElementById('app-notepad'); if(!el) return;
-                        el.innerHTML = `<div class="p-3 bg-pink-100 flex justify-between"><span class="font-bold text-pink-600">목록 (${list.length})</span><button onclick="Apps.notepad.add()" class="bg-white px-2 py-1 rounded text-xs shadow text-pink-500 hover:bg-pink-50"><i class="fas fa-plus"></i> 새 메모</button></div><div class="flex-1 overflow-auto p-2 space-y-2">${list.map(m => `<div class="bg-white p-3 rounded shadow-sm cursor-pointer hover:bg-pink-50 border border-pink-50" onclick="Apps.notepad.edit(${m.id})"><div class="font-bold text-sm truncate text-gray-700">${m.t||'(제목없음)'}</div><div class="text-xs text-gray-400 truncate">${m.c}</div></div>`).join('')}</div>`;
-                    };
-                    Apps.notepad.add = () => { const l=DB.load('memos',[]); l.unshift({id:Date.now(),t:'',c:''}); DB.save('memos',l); Apps.notepad.edit(l[0].id); };
-                    Apps.notepad.edit = (id) => {
-                        const l=DB.load('memos',[]); const m=l.find(x=>x.id===id); if(!m) return render();
-                        document.getElementById('app-notepad').innerHTML = `<div class="h-full flex flex-col"><div class="p-2 bg-pink-100 flex justify-between"><button onclick="Apps.notepad.run()" class="text-pink-500 px-2"><i class="fas fa-arrow-left"></i> 목록</button><div class="flex gap-2"><button onclick="Apps.notepad.del(${id})" class="text-red-400 px-2"><i class="fas fa-trash"></i></button><button onclick="Apps.notepad.save(${id})" class="bg-pink-400 text-white px-3 rounded text-xs font-bold">저장</button></div></div><input id="note-t" class="p-3 bg-transparent font-bold border-b border-pink-200 outline-none text-gray-700" value="${m.t}" placeholder="제목"><textarea id="note-c" class="flex-1 p-3 bg-transparent resize-none outline-none leading-relaxed text-gray-600">${m.c}</textarea></div>`;
-                    };
-                    Apps.notepad.save = (id) => { const l=DB.load('memos',[]); const i=l.findIndex(x=>x.id===id); if(i>=0){ l[i].t=document.getElementById('note-t').value; l[i].c=document.getElementById('note-c').value; DB.save('memos',l); alert('저장됨!'); Apps.notepad.run(); } };
-                    Apps.notepad.del = (id) => { if(confirm('삭제해?')) { DB.save('memos', DB.load('memos',[]).filter(x=>x.id!==id)); Apps.notepad.run(); } }; render();
-                }
-            },
+            notepad: { t: '✏️ 메모장', w: 400, h: 500, c: `<div id="app-notepad" class="h-full flex flex-col bg-pink-50/30"></div>`, run: () => Apps.notepad.run() },
             planner: { t: '📅 핑크 다이어리', w: 900, h: 700, c: `<div id="app-planner" class="h-full"></div>`, run: () => Planner.init() },
-            todo: {
-                t: '✅ 투두리스트', w: 350, h: 500, c: `<div id="app-todo" class="h-full flex flex-col p-3 bg-white"></div>`,
-                run: () => {
-                    const render = () => {
-                        const l = DB.load('todos', [{id:1,t:'UX/UI 공부하기',d:false}]);
-                        document.getElementById('app-todo').innerHTML = `<div class="flex gap-2 mb-4"><input id="todo-in" class="flex-1 border-2 border-pink-100 rounded px-3 py-2 text-sm outline-none focus:border-pink-300" placeholder="할 일..."><button onclick="Apps.todo.add()" class="bg-pink-400 text-white px-3 rounded hover:bg-pink-500"><i class="fas fa-plus"></i></button></div><div class="flex-1 overflow-auto space-y-2">${l.map(t=>`<div class="flex items-center gap-2 p-2 border border-pink-50 rounded hover:bg-pink-50"><input type="checkbox" ${t.d?'checked':''} onclick="Apps.todo.tog(${t.id})" class="accent-pink-400"><span class="flex-1 text-sm ${t.d?'line-through text-gray-400':''}">${t.t}</span><button onclick="Apps.todo.del(${t.id})" class="text-gray-300 hover:text-red-400"><i class="fas fa-times"></i></button></div>`).join('')}</div>`;
-                    };
-                    Apps.todo.add = () => { const v=document.getElementById('todo-in').value; if(v){ const l=DB.load('todos',[]); l.push({id:Date.now(),t:v,d:false}); DB.save('todos',l); render(); } };
-                    Apps.todo.tog = (id) => { const l=DB.load('todos',[]); const t=l.find(x=>x.id===id); if(t){ t.d=!t.d; DB.save('todos',l); render(); } };
-                    Apps.todo.del = (id) => { DB.save('todos',DB.load('todos',[]).filter(x=>x.id!==id)); render(); }; render();
-                }
-            },
-            gallery: {
-                t: '📷 갤러리', w: 500, h: 600, c: `<div id="app-gallery" class="h-full flex flex-col"></div>`,
-                run: () => {
-                    const render = () => {
-                        const l = DB.load('imgs', []);
-                        document.getElementById('app-gallery').innerHTML = `<div class="p-2 border-b border-pink-100 flex justify-between bg-white"><span class="text-xs text-gray-500">${l.length}장</span><label class="cursor-pointer bg-pink-400 text-white px-3 py-1 rounded-lg text-xs hover:bg-pink-500 transition shadow-sm font-bold"><i class="fas fa-upload mr-1"></i> 사진 추가<input type="file" class="hidden" accept="image/*" onchange="Apps.gallery.up(this)"></label></div><div class="flex-1 overflow-auto grid grid-cols-2 gap-2 p-2 bg-pink-50">${l.length?l.map((s,i)=>`<div class="aspect-square bg-white border border-pink-100 rounded-xl overflow-hidden relative group"><img src="${s}" class="w-full h-full object-cover"><button onclick="Apps.gallery.del(${i})" class="absolute inset-0 bg-black/40 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition">삭제</button></div>`).join(''):'<div class="col-span-2 text-center py-10 text-gray-400">사진을 올려줘!</div>'}</div>`;
-                    };
-                    Apps.gallery.up = (el) => { if(el.files[0]) Utils.readFile(el.files[0], d => { const l=DB.load('imgs',[]); l.unshift(d); DB.save('imgs',l); render(); }); };
-                    Apps.gallery.del = (i) => { if(confirm('지워?')) { const l=DB.load('imgs',[]); l.splice(i,1); DB.save('imgs',l); render(); } }; render();
-                }
-            },
-            profile: {
-                t: '🐰 프로필', w: 380, h: 500, c: `<div id="app-profile" class="h-full overflow-auto bg-gradient-to-b from-white to-pink-50 p-6 flex flex-col items-center gap-4"></div>`,
-                run: () => {
-                    const d = DB.load('profile', {img:'https://api.dicebear.com/7.x/avataaars/svg?seed=Saebom', name:'조새봄', mbti:'ISFJ'});
-                    const el = document.getElementById('app-profile');
-                    el.innerHTML = `<div class="relative group cursor-pointer" onclick="document.getElementById('pf-up').click()"><div class="w-32 h-32 rounded-full border-4 border-pink-200 overflow-hidden bg-white shadow-md"><img src="${d.img}" class="w-full h-full object-cover"></div><div class="absolute inset-0 bg-black/30 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 font-bold text-sm">변경</div><input id="pf-up" type="file" class="hidden" accept="image/*" onchange="Apps.profile.up(this)"></div><div class="text-center"><h2 class="text-2xl font-bold text-gray-800">${d.name}</h2><p class="text-pink-400 text-sm font-bold">Web Designer</p></div><div class="w-full bg-white/70 p-4 rounded-xl shadow-sm text-sm space-y-2 border border-pink-100"><p>🎂 1996.11.04</p><p>🏠 서울 거주</p><p>🧩 ${d.mbti}</p><p>💖 토끼, 레이스, 핑크</p></div>`;
-                    Apps.profile.up = (el) => { if(el.files[0]) Utils.readFile(el.files[0], s => { d.img=s; DB.save('profile',d); Apps.profile.run(); }); };
-                }
-            },
-            goal: { t: '🎯 목표', w: 400, h: 400, c: `<div id="app-goal" class="h-full"></div>`, run: () => GoalApp.init() },
-            diary_viewer: { t: '📖 그림일기 모아보기', w: 700, h: 600, c: `<div id="app-diary-viewer" class="h-full"></div>`, run: () => DiaryViewer.init() }
+            todo: { t: '✅ 투두리스트', w: 350, h: 500, c: `<div id="app-todo" class="h-full flex flex-col p-3 bg-white"></div>`, run: () => Apps.todo.run() },
+            gallery: { t: '📷 갤러리', w: 500, h: 600, c: `<div id="app-gallery" class="h-full flex flex-col"></div>`, run: () => Apps.gallery.run() },
+            profile: { t: '🐰 프로필', w: 380, h: 500, c: `<div id="app-profile" class="h-full overflow-hidden relative"></div>`, run: () => ProfileApp.init() },
+            fortune: { t: '🍀 오늘의 운세', w: 400, h: 500, c: '', run: () => FortuneApp.init() }, 
+            diary_viewer: { t: '📖 그림일기 모아보기', w: 700, h: 600, c: `<div id="app-diary-viewer" class="h-full"></div>`, run: () => DiaryViewer.init() },
+            time_capsule: { t: '📮 타임캡슐', w: 400, h: 500, c: `<div id="app-time-capsule" class="h-full"></div>`, run: () => TimeCapsuleApp.init() },
+            polaroid: { t: '📸 폴라로이드', w: 0, h: 0, c:'', run: () => PolaroidApp.init() } 
+        };
+        
+        Apps.notepad.run = () => { 
+             const render = () => { const list = DB.load('memos', []); const el = document.getElementById('app-notepad'); if(!el) return; el.innerHTML = `<div class="p-3 bg-pink-100 flex justify-between"><span class="font-bold text-pink-600 font-sans text-lg">목록 (${list.length})</span><button onclick="Apps.notepad.add()" class="bg-white px-2 py-1 rounded text-xs shadow text-pink-500 hover:bg-pink-50"><i class="fas fa-plus"></i> 새 메모</button></div><div class="flex-1 overflow-auto p-2 space-y-2">${list.map(m => `<div class="bg-white p-3 rounded shadow-sm cursor-pointer hover:bg-pink-50 border border-pink-50" onclick="Apps.notepad.edit(${m.id})"><div class="font-bold text-sm truncate text-gray-700">${m.t||'(제목없음)'}</div><div class="text-xs text-gray-400 truncate">${m.c}</div></div>`).join('')}</div>`; };
+             Apps.notepad.add = () => { const l=DB.load('memos',[]); l.unshift({id:Date.now(),t:'',c:''}); DB.save('memos',l); Apps.notepad.edit(l[0].id); };
+             Apps.notepad.edit = (id) => { const l=DB.load('memos',[]); const m=l.find(x=>x.id===id); if(!m) return render(); document.getElementById('app-notepad').innerHTML = `<div class="h-full flex flex-col"><div class="p-2 bg-pink-100 flex justify-between"><button onclick="Apps.notepad.run()" class="text-pink-500 px-2"><i class="fas fa-arrow-left"></i> 목록</button><div class="flex gap-2"><button onclick="Apps.notepad.del(${id})" class="text-red-400 px-2"><i class="fas fa-trash"></i></button><button onclick="Apps.notepad.save(${id})" class="bg-pink-400 text-white px-3 rounded text-xs font-bold">저장</button></div></div><input id="note-t" class="p-3 bg-transparent font-bold border-b border-pink-200 outline-none text-gray-700 font-sans text-lg" value="${m.t}" placeholder="제목"><textarea id="note-c" class="flex-1 p-3 bg-transparent resize-none outline-none leading-relaxed text-gray-600 font-sans text-lg">${m.c}</textarea></div>`; };
+             Apps.notepad.save = (id) => { const l=DB.load('memos',[]); const i=l.findIndex(x=>x.id===id); if(i>=0){ l[i].t=document.getElementById('note-t').value; l[i].c=document.getElementById('note-c').value; DB.save('memos',l); alert('저장됨!'); Apps.notepad.run(); } };
+             Apps.notepad.del = (id) => { if(confirm('삭제해?')) { DB.save('memos', DB.load('memos',[]).filter(x=>x.id!==id)); Apps.notepad.run(); } }; render();
+        };
+        Apps.todo.run = () => {
+             const render = () => { const l = DB.load('todos', [{id:1,t:'UX/UI 공부하기',d:false}]); document.getElementById('app-todo').innerHTML = `<div class="flex gap-2 mb-4"><input id="todo-in" class="flex-1 border-2 border-pink-100 rounded px-3 py-2 text-sm outline-none focus:border-pink-300 font-sans" placeholder="할 일..."><button onclick="Apps.todo.add()" class="bg-pink-400 text-white px-3 rounded hover:bg-pink-500"><i class="fas fa-plus"></i></button></div><div class="flex-1 overflow-auto space-y-2">${l.map(t=>`<div class="flex items-center gap-2 p-2 border border-pink-50 rounded hover:bg-pink-50"><input type="checkbox" ${t.d?'checked':''} onclick="Apps.todo.tog(${t.id})" class="accent-pink-400"><span class="flex-1 text-sm font-sans text-lg ${t.d?'line-through text-gray-400':''}">${t.t}</span><button onclick="Apps.todo.del(${t.id})" class="text-gray-300 hover:text-red-400"><i class="fas fa-times"></i></button></div>`).join('')}</div>`; };
+             Apps.todo.add = () => { const v=document.getElementById('todo-in').value; if(v){ const l=DB.load('todos',[]); l.push({id:Date.now(),t:v,d:false}); DB.save('todos',l); render(); } };
+             Apps.todo.tog = (id) => { const l=DB.load('todos',[]); const t=l.find(x=>x.id===id); if(t){ t.d=!t.d; DB.save('todos',l); render(); } };
+             Apps.todo.del = (id) => { DB.save('todos',DB.load('todos',[]).filter(x=>x.id!==id)); render(); }; render();
+        };
+        Apps.gallery.run = () => {
+             const render = () => { const l = DB.load('imgs', []); document.getElementById('app-gallery').innerHTML = `<div class="p-2 border-b border-pink-100 flex justify-between bg-white"><span class="text-xs text-gray-500">${l.length}장</span><label class="cursor-pointer bg-pink-400 text-white px-3 py-1 rounded-lg text-xs hover:bg-pink-500 transition shadow-sm font-bold"><i class="fas fa-upload mr-1"></i> 사진 추가<input type="file" class="hidden" accept="image/*" onchange="Apps.gallery.up(this)"></label></div><div class="flex-1 overflow-auto grid grid-cols-2 gap-2 p-2 bg-pink-50">${l.length?l.map((s,i)=>`<div class="aspect-square bg-white border border-pink-100 rounded-xl overflow-hidden relative group"><img src="${s}" class="w-full h-full object-cover"><button onclick="Apps.gallery.del(${i})" class="absolute inset-0 bg-black/40 text-white opacity-0 group-hover:opacity-100 flex items-center justify-center transition">삭제</button></div>`).join(''):'<div class="col-span-2 text-center py-10 text-gray-400 font-sans">사진을 올려줘!</div>'}</div>`; };
+             Apps.gallery.up = (el) => { if(el.files[0]) Utils.readFile(el.files[0], d => { const l=DB.load('imgs',[]); l.unshift(d); DB.save('imgs',l); render(); }); };
+             Apps.gallery.del = (i) => { if(confirm('지워?')) { const l=DB.load('imgs',[]); l.splice(i,1); DB.save('imgs',l); render(); } }; render();
         };
 
         const app = {
             sky: null, wm: null,
             init: () => {
-                app.sky = new SkyRenderer(); app.wm = new WindowManager(); DDayApp.init();
+                app.sky = new SkyRenderer(); new MouseTrail(); app.wm = new WindowManager(); DDayApp.init(); PolaroidApp.init(); HeartWidget.init(); RabbitPet.init();
+                
+                // 전역 객체 연결
+                window.TimeCapsuleApp = TimeCapsuleApp; window.PolaroidApp = PolaroidApp; window.HeartWidget = HeartWidget; window.RabbitPet = RabbitPet; window.DDayApp = DDayApp; window.ProfileApp = ProfileApp;
+
                 const update = () => { document.getElementById('clock-time').innerText = Utils.formatTime(); }; setInterval(update, 1000); update();
                 fetch('https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.9780&current_weather=true').then(r=>r.json()).then(d=>{ document.getElementById('weather-text').innerText = `맑음 ${Math.round(d.current_weather.temperature)}°C`; }).catch(()=>{});
                 setTimeout(() => { document.getElementById('loading-screen').style.opacity = '0'; setTimeout(()=>document.getElementById('loading-screen').remove(),700); }, 1000);
             },
-            openWindow: (id) => { const a = Apps[id]; if(!a) return; app.wm.create(id, a.t, a.c, a.w, a.h); if(a.run) setTimeout(a.run, 0); },
-            close: (id) => app.wm.close(id), max: (id) => app.wm.max(id),
-            toggleTheme: () => { app.sky.night = !app.sky.night; document.getElementById('theme-icon').className = app.sky.night ? 'fas fa-moon text-3xl text-yellow-100' : 'fas fa-sun text-3xl text-yellow-400'; }
+            openWindow: (id) => { 
+                if (id === 'fortune') { FortuneApp.init(); return; } 
+                const a = Apps[id]; if(!a) return; 
+                app.wm.create(id, a.t, a.c, a.w, a.h); 
+                if(a.run) setTimeout(a.run, 0); 
+            },
+            close: (id) => app.wm.close(id), max: (id) => app.wm.max(id)
         };
+        
+        // 전역 노출
+        window.app = app; window.Planner = Planner; window.DDayApp = DDayApp; window.FortuneApp = FortuneApp; window.DiaryViewer = DiaryViewer; window.Apps = Apps; window.DB = DB; window.Utils = Utils; window.HeartWidget = HeartWidget; window.RabbitPet = RabbitPet; window.PolaroidApp = PolaroidApp; window.TimeCapsuleApp = TimeCapsuleApp; window.ProfileApp = ProfileApp;
+
         window.onload = app.init;
     </script>
 </body>
