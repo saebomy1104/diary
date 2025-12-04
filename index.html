@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🍰일기땽🐰</title>
+    <title>☁️일기땽☁️</title>
     
     <!-- 아이콘 & 폰트 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -330,7 +330,7 @@
     <div id="desktop-pet" onclick="RabbitPet.hop()">
         <div class="pet-speech">안녕? 난 토끼야! 🐰</div>
         <div class="pet-body">🐰</div>
-        <div class="pet-heart">🍰</div>
+        <div class="pet-heart">💖</div>
     </div>
 
     <!-- 아이콘 -->
@@ -662,7 +662,7 @@
         // Rabbit Pet
         const RabbitPet = {
             el: null, heart: null, isMoving: false,
-            messages: ["새봄아 눈 깜빡여봐! 👀", "으쌰으쌰 스트레칭! 🙆‍♀️", "사랑해! 💖", "오늘 기분 어때? 🐰", "물 마셨어? 💧", "거북목 조심! 🐢", "웃어봐 스마일 ✨", "단 거 먹을래? 🍰", "넌 최고야! 👍"],
+            messages: ["새봄아 눈 깜빡여봐! 👀", "으쌰으쌰 스트레칭! 🙆‍♀️", "사랑해! 💖", "오늘 기분 어때? 🐰", "물 마셨어? 💧", "거북목 조심! 🐢", "웃어봐 스마일 ✨", "당 충전 고고? 🍭", "넌 최고야! 👍"],
             init: () => {
                 RabbitPet.el = document.getElementById('desktop-pet');
                 RabbitPet.heart = document.querySelector('.pet-heart');
@@ -710,7 +710,7 @@
 
         // Fortune App
         const FortuneApp = {
-            fortunes: ["오늘은 뭘 해도 되는 날! 🎫", "길 가다 돈 줍는 행운?! 👀", "인생샷 건지는 날! 📸", "뜻밖의 선물 도착 🎁", "먹고 싶던 거 먹는 날 🍰", "피부가 꿀피부 ✨", "택배가 빨리 온다 📦", "대중교통 타이밍 굿 🚌", "자신감을 가져! 👑", "소확행이 찾아온다 🥰", "머리 스타일 굿 💇‍♀️", "맛있는 디저트 발견 🍰", "하늘을 봐봐 예뻐 ☁️", "좋아하는 노래 들어봐 🎧", "물 많이 마시기 💧", "스트레칭 쫙쫙 🧘‍♀️", "방 청소하면 운 UP 🧹", "일찍 자면 피부 미인 🌙", "새로운 취미 도전? 🎨", "친구에게 톡해봐 📱", "핑크템이 행운템 🎀", "비타민 챙겨 💊", "차 한 잔의 여유 ☕", "귀여운 고양이 봄 🐾", "지갑 사수! 💸", "우산 챙겨 ☔", "말 조심 🤫", "저장(Ctrl+S) 필수 💾", "무리 금지 🔋", "체함 주의 🥄", "발가락 찧음 주의 🦶", "지각 조심 ⏰", "배터리 충전 ⚡", "집콕이 최고 🏠"],
+            fortunes: ["오늘은 뭘 해도 되는 날! 🎫", "길 가다 돈 줍는 행운?! 👀", "인생샷 건지는 날! 📸", "뜻밖의 선물 도착 🎁", "먹고 싶던 거 먹는 날 🍔", "피부가 꿀피부 ✨", "택배가 빨리 온다 📦", "대중교통 타이밍 굿 🚌", "자신감을 가져! 👑", "소확행이 찾아온다 🥰", "머리 스타일 굿 💇‍♀️", "맛있는 디저트 발견 🍰", "하늘을 봐봐 예뻐 ☁️", "좋아하는 노래 들어봐 🎧", "물 많이 마시기 💧", "스트레칭 쫙쫙 🧘‍♀️", "방 청소하면 운 UP 🧹", "일찍 자면 피부 미인 🌙", "새로운 취미 도전? 🎨", "친구에게 톡해봐 📱", "핑크템이 행운템 🎀", "비타민 챙겨 💊", "차 한 잔의 여유 ☕", "귀여운 고양이 봄 🐾", "지갑 사수! 💸", "우산 챙겨 ☔", "말 조심 🤫", "저장(Ctrl+S) 필수 💾", "무리 금지 🔋", "체함 주의 🥄", "발가락 찧음 주의 🦶", "지각 조심 ⏰", "배터리 충전 ⚡", "집콕이 최고 🏠"],
             init: () => {
                 const modal = document.createElement('div'); modal.className = 'custom-modal-overlay'; modal.onclick = () => modal.remove();
                 modal.innerHTML = `<div class="flex flex-col items-center justify-center animate-pop-in" onclick="event.stopPropagation()"><div class="tarot-card" onclick="FortuneApp.flip(this)"><div class="tarot-inner"><div class="tarot-front"><div class="text-6xl mb-4">🌟</div><h3 class="text-xl font-bold text-pink-500 mb-2">Lucky!</h3><p class="text-sm text-gray-600 px-2 break-keep" id="fortune-text"></p></div><div class="tarot-back"></div></div></div><p class="text-white mt-4 font-bold text-shadow animate-pulse">카드를 눌러서 뒤집어보세요!</p></div>`;
@@ -921,7 +921,7 @@
         };
 
         const Planner = {
-            date: new Date(), view: 'monthly', icons: ['🐰', '🐤', '💖', '🎀', '🍰', '⭐', '🌸', '🧸', '🍭', '🎵'], weathers: ['☀️', '☁️', '☔', '☃️'], moods: ['🥰', '😐', '😭', '😡', '🥳'], selectedIcon: '🐰', currentDiary: { img: null, weather: '☀️', mood: '🥰' },
+            date: new Date(), view: 'monthly', icons: ['🐰', '🐤', '💖', '🎀', '🎂', '⭐', '🌸', '🧸', '🍭', '🎵'], weathers: ['☀️', '☁️', '☔', '☃️'], moods: ['🥰', '😐', '😭', '😡', '🥳'], selectedIcon: '🐰', currentDiary: { img: null, weather: '☀️', mood: '🥰' },
             init: () => { Planner.render(); }, formatYMD: (y,m,d) => `${y}-${m}-${d}`, formatMD: (m,d) => `${m}-${d}`, getWeekKey: (d) => { const onejan = new Date(d.getFullYear(), 0, 1); return `${d.getFullYear()}-W${Math.ceil((((d - onejan) / 86400000) + onejan.getDay() + 1) / 7)}`; }, closePopup: (id) => { const el = document.getElementById(id); if (el) el.remove(); },
             render: () => {
                 const el = document.getElementById('app-planner'); if(!el) return;
