@@ -133,34 +133,11 @@
         .schedule-item.yearly { background-color: #FEF3C7; color: #D97706; border-left: 2px solid #F59E0B; }
         .schedule-item.monthly { background-color: #FCE7F3; color: #BE185D; border-left: 3px solid #FF69B4; }
 
-        /* [NEW] 이얼리(연간) 뷰 스타일 추가 */
-        .yearly-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 2px;
-            text-align: center;
-        }
-        .yearly-day {
-            aspect-ratio: 1/1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            cursor: pointer;
-            border-radius: 4px;
-            color: #666;
-        }
-        .yearly-day:hover {
-            background-color: #FFF0F5;
-        }
-        /* 기념일이 있는 날짜 표시 */
-        .yearly-day.has-anniversary {
-            background-color: #FF80AB;
-            color: white;
-            font-weight: bold;
-            border-radius: 50%;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
+        /* 이얼리 뷰 스타일 */
+        .yearly-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+        .yearly-day { aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; border-radius: 4px; color: #666; }
+        .yearly-day:hover { background-color: #FFF0F5; }
+        .yearly-day.has-anniversary { background-color: #FF80AB; color: white; font-weight: bold; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
         /* 다이어리 & 아이콘 선택기 */
         .icon-selector, .meta-selector { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
@@ -230,7 +207,7 @@
             background: transparent; border: none; resize: none;
             outline: none; text-align: center; font-family: 'Paperlogy', sans-serif;
             font-size: 20px; 
-            font-weight: 500; /* [수정] 폰트 두께 미디움(500)으로 변경 */
+            font-weight: 500; 
             color: #ff6b8b; 
             z-index: 10;
         }
@@ -294,15 +271,30 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 183, 197, 0.5); border-radius: 3px; }
+        
+        /* 로그인 버튼 스타일 */
+        .login-btn {
+            background: white; color: #757575; font-weight: bold; font-family: 'Paperlogy', sans-serif;
+            padding: 10px 20px; border-radius: 30px; display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.2s; cursor: pointer;
+            border: 1px solid #ddd;
+        }
+        .login-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15); }
     </style>
 </head>
 <body class="text-slate-700 selection:bg-pink-200 selection:text-white">
 
-    <!-- 로딩 (핑크) -->
+    <!-- 로딩 & 로그인 화면 -->
     <div id="loading-screen" class="fixed inset-0 z-[9999] bg-[#FFB7C5] flex flex-col items-center justify-center transition-opacity duration-700">
         <i class="fas fa-heart text-6xl text-white animate-bounce mb-4"></i>
-        <h1 class="text-3xl font-bold text-white tracking-widest font-sans">Sky Mini-Hompy</h1>
-        <p class="text-white/90 mt-2">새봄이의 핑크빛 하루 로딩 중... 🎀</p>
+        <h1 class="text-3xl font-bold text-white tracking-widest font-sans mb-6">Sky Mini-Hompy</h1>
+        <p id="loading-text" class="text-white/90 mb-6">새봄이의 핑크빛 세상 연결 중... ☁️</p>
+        
+        <!-- 구글 로그인 버튼 (처음엔 숨김) -->
+        <button id="google-login-btn" class="hidden login-btn" onclick="DB.login()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-6 h-6">
+            <span>Google로 로그인하고 시작하기</span>
+        </button>
     </div>
 
     <!-- 배경 -->
@@ -316,7 +308,6 @@
         <svg class="absolute inset-0 w-full h-full text-white drop-shadow-xl" viewBox="0 0 24 24" fill="currentColor" opacity="0.95">
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
         </svg>
-        <!-- [수정] placeholder 내용 삭제 -->
         <textarea id="heart-memo" placeholder="" oninput="HeartWidget.save(this.value)"></textarea>
     </div>
 
@@ -377,6 +368,8 @@
         <div id="dday-widget" class="flex items-center gap-3 bg-white/40 backdrop-blur px-4 py-2 rounded-xl border border-white/50 shadow-lg animate-bounce-slight mt-2 pointer-events-auto cursor-pointer hover:scale-105 transition" onclick="DDayApp.openSettings()">
             <!-- JS -->
         </div>
+        <!-- 로그아웃 버튼 (작게) -->
+        <button onclick="DB.logout()" class="mt-2 text-xs text-white/70 hover:text-white underline pointer-events-auto cursor-pointer">로그아웃</button>
     </div>
 
     <!-- 윈도우 컨테이너 -->
@@ -393,13 +386,158 @@
     <!-- 모달 컨테이너 -->
     <div id="modal-container" class="relative z-[9999]"></div>
 
-    <script>
-        // --- 0. 데이터베이스 ---
-        const DB = {
-            save: (key, data) => { try { localStorage.setItem(`skyos_v15_${key}`, JSON.stringify(data)); } catch(e) { console.error('Storage Full'); } },
-            load: (key, defaultVal) => { try { const d = localStorage.getItem(`skyos_v15_${key}`); return d ? JSON.parse(d) : defaultVal; } catch(e) { return defaultVal; } }
+    <!-- Firebase SDK Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, collection } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+        // --- 0. 데이터베이스 설정 (Firebase) ---
+        // 🚨 중요: 깃허브에 올릴 때는 아래 if문 안의 'else' 부분에 본인의 firebaseConfig를 넣어주세요!
+        
+        let firebaseConfig;
+        let appId = 'saeboms-pink-world'; // 기본 앱 ID
+
+        // Gemini 미리보기 환경인지 확인
+        if (typeof __firebase_config !== 'undefined') {
+            firebaseConfig = JSON.parse(__firebase_config);
+            if (typeof __app_id !== 'undefined') appId = __app_id;
+        } else {
+            // 🔥 [깃허브 배포용] 여기에 새봄이의 파이어베이스 설정을 붙여넣으세요!
+            firebaseConfig = {
+              apiKey: "AIzaSyCWxYsElTcy7X4b7J18IbZOHXSAVg9vIDY",
+              authDomain: "diary-80a65.firebaseapp.com",
+              projectId: "diary-80a65",
+              storageBucket: "diary-80a65.firebasestorage.app",
+              messagingSenderId: "1012838308810",
+              appId: "1:1012838308810:web:e3ef40d64a16416e490d33"
+            };
+        }
+
+        let appInstance, auth, db, user;
+        const googleProvider = new GoogleAuthProvider();
+        
+        // 데이터 캐싱 (속도 향상용)
+        const Cache = {
+            data: {},
+            isLoaded: false
         };
 
+        const DB = {
+            // 초기화: 파이어베이스 연결 및 인증 리스너 설정
+            init: async () => {
+                if (!firebaseConfig) {
+                    Cache.isLoaded = true;
+                    // 설정이 없으면 로그인 화면을 숨기고 로컬 모드처럼 동작하게 할 수도 있지만,
+                    // 사용자에게 설정을 유도하기 위해 경고만 남김
+                    document.getElementById('loading-text').innerText = "Firebase 설정이 필요해요!";
+                    return;
+                }
+
+                try {
+                    appInstance = initializeApp(firebaseConfig);
+                    auth = getAuth(appInstance);
+                    db = getFirestore(appInstance);
+
+                    // 1. Gemini 미리보기 환경 전용: 자동 로그인
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } 
+                    // 2. 깃허브 배포 환경: 자동 로그인 시도 안 함 (사용자가 버튼 눌러야 함)
+                    // 다만, 이전에 로그인한 기록이 있으면 onAuthStateChanged가 자동으로 감지함!
+
+                    // 인증 상태 변화 감지
+                    onAuthStateChanged(auth, async (u) => {
+                        if (u) {
+                            user = u;
+                            console.log("로그인 성공:", user.uid);
+                            await DB.loadAllData(); // 데이터 불러오기
+                            
+                            // 로딩 화면 제거 & 앱 시작
+                            document.getElementById('loading-screen').style.opacity = '0'; 
+                            setTimeout(()=>document.getElementById('loading-screen').remove(),700);
+                        } else {
+                            // 로그아웃 상태면 로그인 버튼 보여주기
+                            document.getElementById('loading-text').innerText = "로그인이 필요해요!";
+                            document.getElementById('google-login-btn').classList.remove('hidden');
+                        }
+                    });
+
+                } catch (e) {
+                    console.error("Firebase 연결 실패:", e);
+                    alert("오류가 발생했어요. 콘솔을 확인해주세요.");
+                }
+            },
+
+            // 구글 로그인 함수
+            login: async () => {
+                try {
+                    await signInWithPopup(auth, googleProvider);
+                } catch (error) {
+                    console.error("Login failed", error);
+                    alert("로그인에 실패했어요 😢 팝업 차단이 되어있는지 확인해주세요!");
+                }
+            },
+
+            // 로그아웃 함수
+            logout: async () => {
+                if(confirm("정말 로그아웃 할까요?")) {
+                    await signOut(auth);
+                    window.location.reload();
+                }
+            },
+
+            // 모든 데이터 한 번에 불러오기
+            loadAllData: async () => {
+                const collections = ['heart_memo', 'my_dday', 'polaroid_data', 'time_capsule', 'profile_data_v2', 'planner_diary_v2', 'planner_schedule', 'planner_yearly', 'planner_weekly_todo', 'memos', 'todos', 'imgs'];
+                
+                for (const col of collections) {
+                    let docRef;
+                    if (typeof __app_id !== 'undefined') {
+                            docRef = doc(db, 'artifacts', appId, 'users', user.uid, col, 'data');
+                    } else {
+                            // 개인 깃허브용 단순 경로
+                            docRef = doc(db, 'users', user.uid, 'app_data', col);
+                    }
+                    
+                    const snapshot = await getDoc(docRef);
+                    if (snapshot.exists()) {
+                        Cache.data[col] = snapshot.data().val;
+                    }
+                }
+                Cache.isLoaded = true;
+            },
+
+            // 저장 (로컬 + 파이어베이스 동기화)
+            save: async (key, data) => {
+                Cache.data[key] = data; 
+                if (db && user) {
+                    try {
+                        let docRef;
+                        if (typeof __app_id !== 'undefined') {
+                             docRef = doc(db, 'artifacts', appId, 'users', user.uid, key, 'data');
+                        } else {
+                             docRef = doc(db, 'users', user.uid, 'app_data', key);
+                        }
+                        await setDoc(docRef, { val: data }, { merge: true });
+                    } catch (e) { console.error("저장 실패:", e); }
+                } else {
+                    localStorage.setItem(`skyos_bk_${key}`, JSON.stringify(data));
+                }
+            },
+
+            // 불러오기 (캐시에서 즉시 리턴)
+            load: (key, defaultVal) => {
+                if (Cache.data[key] !== undefined) return Cache.data[key];
+                try {
+                    const local = localStorage.getItem(`skyos_bk_${key}`);
+                    if (local) return JSON.parse(local);
+                } catch(e) {}
+                return defaultVal;
+            }
+        };
+
+        // --- Utils 등 기존 로직 ---
         const Utils = {
             formatDate: () => new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }),
             formatTime: () => new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
@@ -788,15 +926,24 @@
 
         const app = {
             sky: null, wm: null,
-            init: () => {
-                app.sky = new SkyRenderer(); new MouseTrail(); app.wm = new WindowManager(); DDayApp.init(); PolaroidApp.init(); HeartWidget.init(); RabbitPet.init();
+            init: async () => {
+                app.sky = new SkyRenderer(); 
+                new MouseTrail(); 
+                app.wm = new WindowManager(); 
+                
+                // DB 초기화 대기 (로딩 화면 유지)
+                await DB.init();
+                
+                DDayApp.init(); 
+                PolaroidApp.init(); 
+                HeartWidget.init(); 
+                RabbitPet.init();
                 
                 // 전역 객체 연결
                 window.TimeCapsuleApp = TimeCapsuleApp; window.PolaroidApp = PolaroidApp; window.HeartWidget = HeartWidget; window.RabbitPet = RabbitPet; window.DDayApp = DDayApp; window.ProfileApp = ProfileApp;
 
                 const update = () => { document.getElementById('clock-time').innerText = Utils.formatTime(); }; setInterval(update, 1000); update();
                 fetch('https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.9780&current_weather=true').then(r=>r.json()).then(d=>{ document.getElementById('weather-text').innerText = `맑음 ${Math.round(d.current_weather.temperature)}°C`; }).catch(()=>{});
-                setTimeout(() => { document.getElementById('loading-screen').style.opacity = '0'; setTimeout(()=>document.getElementById('loading-screen').remove(),700); }, 1000);
             },
             openWindow: (id) => { 
                 if (id === 'fortune') { FortuneApp.init(); return; } 
