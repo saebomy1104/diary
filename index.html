@@ -393,7 +393,6 @@
         import { getFirestore, doc, getDoc, setDoc, updateDoc, collection } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         // --- 0. 데이터베이스 설정 (Firebase) ---
-        // 🚨 중요: 깃허브에 올릴 때는 아래 if문 안의 'else' 부분에 본인의 firebaseConfig를 넣어주세요!
         
         let firebaseConfig;
         let appId = 'saeboms-pink-world'; // 기본 앱 ID
@@ -403,7 +402,7 @@
             firebaseConfig = JSON.parse(__firebase_config);
             if (typeof __app_id !== 'undefined') appId = __app_id;
         } else {
-            // 🔥 [깃허브 배포용] 여기에 새봄이의 파이어베이스 설정을 붙여넣으세요!
+            // 🔥 [깃허브 배포용] 새봄이의 파이어베이스 설정
             firebaseConfig = {
               apiKey: "AIzaSyCWxYsElTcy7X4b7J18IbZOHXSAVg9vIDY",
               authDomain: "diary-80a65.firebaseapp.com",
@@ -581,8 +580,8 @@
             loop() {
                 const g = this.ctx.createLinearGradient(0,0,0,this.h);
                 // 메인 배경: 쿨톤 핑크 그라데이션 (위: 아주 밝음, 아래: 진함)
-                g.addColorStop(0,'#ffeaf4'); // Top: 아주 밝은 쿨톤 핑크
-                g.addColorStop(1,'#ff9ebb'); // Bottom: 조금 진한 쿨톤 핑크
+                g.addColorStop(0,'#f5bed8'); // Top: 아주 밝은 쿨톤 핑크
+                g.addColorStop(1,'#eb9cc1'); // Bottom: 조금 진한 쿨톤 핑크
                 this.ctx.fillStyle = g; this.ctx.fillRect(0,0,this.w,this.h);
                 this.items.forEach(c => {
                     c.y -= c.v; if(c.y < -50) c.y = this.h + 50;
@@ -628,7 +627,7 @@
         // Rabbit Pet
         const RabbitPet = {
             el: null, heart: null, isMoving: false,
-            messages: ["새봄아 눈 깜빡여봐! 👀", "으쌰으쌰 스트레칭! 🙆‍♀️", "사랑해! 💖", "오늘 기분 어때? 🐰", "물 마셨어? 💧", "거북목 조심! 🐢", "웃어봐 스마일 ✨", "당 충전 고고? 🍭", "넌 최고야! 👍"],
+            messages: ["눈 깜빡여봐! 👀", "으쌰으쌰 스트레칭! 🙆‍♀️", "사랑해! 💖", "오늘 기분 어때? 🐰", "물 마셨어? 💧", "거북목 조심! 🐢", "웃어봐 스마일 ✨", "당 충전 고고? 🍭", "넌 최고야! 👍"],
             init: () => {
                 RabbitPet.el = document.getElementById('desktop-pet');
                 RabbitPet.heart = document.querySelector('.pet-heart');
@@ -712,7 +711,7 @@
                 let content = '';
                 if (!data || !data.locked) {
                     const msg = data ? data.msg : ''; const date = data ? data.date : '';
-                    content = `<div class="p-6 h-full flex flex-col gap-4 bg-pink-50/30"><h3 class="text-xl font-bold text-center text-orange-400">📮 미래의 나에게</h3><textarea id="tc-msg" oninput="TimeCapsuleApp.saveDraft()" class="flex-1 p-4 rounded-xl border-2 border-orange-100 resize-none text-sm leading-relaxed outline-none focus:border-orange-300" placeholder="미래의 새봄이에게 편지를 써보세요...">${msg}</textarea><div class="flex items-center gap-2"><span class="text-xs text-gray-500">개봉일:</span><input id="tc-date" type="date" class="border rounded p-1 text-sm outline-none" value="${date}" onchange="TimeCapsuleApp.saveDraft()"></div><button onclick="TimeCapsuleApp.askLock()" class="w-full bg-orange-400 text-white py-2 rounded-xl font-bold hover:bg-orange-500 transition">타임캡슐 잠그기 🔒</button></div>`;
+                    content = `<div class="p-6 h-full flex flex-col gap-4 bg-pink-50/30"><h3 class="text-xl font-bold text-center text-orange-400">📮 미래의 나에게</h3><textarea id="tc-msg" oninput="TimeCapsuleApp.saveDraft()" class="flex-1 p-4 rounded-xl border-2 border-orange-100 resize-none text-sm leading-relaxed outline-none focus:border-orange-300" placeholder="미래의 나에게 편지를 써보세요...">${msg}</textarea><div class="flex items-center gap-2"><span class="text-xs text-gray-500">개봉일:</span><input id="tc-date" type="date" class="border rounded p-1 text-sm outline-none" value="${date}" onchange="TimeCapsuleApp.saveDraft()"></div><button onclick="TimeCapsuleApp.askLock()" class="w-full bg-orange-400 text-white py-2 rounded-xl font-bold hover:bg-orange-500 transition">타임캡슐 잠그기 🔒</button></div>`;
                 } else {
                     const now = new Date().setHours(0,0,0,0); const unlock = new Date(data.date).setHours(0,0,0,0);
                     if (now >= unlock) {
@@ -741,7 +740,7 @@
         // --- Editable Profile App (수정됨: 흰색 배경) ---
         const ProfileApp = {
             data: {
-                name: '조새봄', job: 'Web Designer', birth: '1996.11.04', mbti: 'ISFJ', live: 'Seoul', bf: '♥건용 (Since 22.10.01)', fav: '토끼, 핑크, 레이스, 게임', img: 'https://api.iconify.design/noto:rabbit-face.svg'
+                name: ' ', job: ' ', birth: ' ', mbti: ' ', live: ' ', bf: ' ', fav: ' ', img: 'https://api.iconify.design/noto:rabbit-face.svg'
             },
             init: () => {
                 const saved = DB.load('profile_data_v2', ProfileApp.data);
@@ -895,7 +894,7 @@
         // --- 기타 앱들 ---
         const Apps = {
             notepad: { t: '✏️ 메모장', w: 400, h: 500, c: `<div id="app-notepad" class="h-full flex flex-col bg-pink-50/30"></div>`, run: () => Apps.notepad.run() },
-            planner: { t: '📅 핑크 다이어리', w: 900, h: 700, c: `<div id="app-planner" class="h-full"></div>`, run: () => Planner.init() },
+            planner: { t: '📅 다이어리', w: 900, h: 700, c: `<div id="app-planner" class="h-full"></div>`, run: () => Planner.init() },
             todo: { t: '✅ 투두리스트', w: 350, h: 500, c: `<div id="app-todo" class="h-full flex flex-col p-3 bg-white"></div>`, run: () => Apps.todo.run() },
             gallery: { t: '📷 갤러리', w: 500, h: 600, c: `<div id="app-gallery" class="h-full flex flex-col"></div>`, run: () => Apps.gallery.run() },
             profile: { t: '🐰 프로필', w: 380, h: 500, c: `<div id="app-profile" class="h-full overflow-hidden relative"></div>`, run: () => ProfileApp.init() },
