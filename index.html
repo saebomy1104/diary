@@ -295,7 +295,6 @@
     <!-- 로딩 & 로그인 화면 -->
     <div id="loading-screen" class="fixed inset-0 z-[9999] bg-[#FFB7C5] flex flex-col items-center justify-center transition-opacity duration-700">
         <i class="fas fa-heart text-6xl text-white animate-bounce mb-4"></i>
-        <!-- [수정] 로그인 타이틀 변경: Sky Mini-Hompy -> 새봄이네 -->
         <h1 class="text-3xl font-bold text-white tracking-widest font-sans mb-6">새봄이네</h1>
         <p id="loading-text" class="text-white/90 mb-6">새봄이네 연결 중... ☁️</p>
         
@@ -311,22 +310,20 @@
     <canvas id="sky-canvas"></canvas>
     <canvas id="cursor-canvas"></canvas>
 
-    <!-- 하트 메모 위젯 (placeholder 제거) -->
+    <!-- 하트 메모 위젯 -->
     <div id="heart-widget">
-        <!-- SVG 하트 배경 (흰색) -->
         <svg class="absolute inset-0 w-full h-full text-white drop-shadow-xl" viewBox="0 0 24 24" fill="currentColor" opacity="0.95">
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
         </svg>
         <textarea id="heart-memo" placeholder="" oninput="HeartWidget.save(this.value)"></textarea>
     </div>
 
-    <!-- 폴라로이드 위젯 (직접 변경 기능 추가) -->
-    <!-- [수정] onclick="PolaroidApp.refresh()" 제거하여 클릭 충돌 방지 -->
+    <!-- 폴라로이드 위젯 -->
     <div id="polaroid-widget">
         <!-- JS로 내용 채움 -->
     </div>
 
-    <!-- 토끼 펫 (위치 고정) -->
+    <!-- 토끼 펫 -->
     <div id="desktop-pet" onclick="RabbitPet.hop()">
         <div class="pet-speech">안녕? 난 토끼야! 🐰</div>
         <div class="pet-body">🐰</div>
@@ -366,7 +363,6 @@
     </div>
 
     <!-- 우측 상단 위젯 -->
-    <!-- [수정] z-index 50 -> 10으로 하향 조정 (윈도우 뒤로 가도록) -->
     <div class="absolute top-8 right-8 text-right text-white select-none pointer-events-none flex flex-col items-end gap-2 z-10">
         <div>
             <h1 id="clock-time" class="text-6xl font-bold tracking-tight text-white drop-shadow-sm font-sans">12:00</h1>
@@ -379,7 +375,6 @@
         <div id="dday-widget" class="flex items-center gap-3 bg-white/40 backdrop-blur px-4 py-2 rounded-xl border border-white/50 shadow-lg animate-bounce-slight mt-2 pointer-events-auto cursor-pointer hover:scale-105 transition" onclick="DDayApp.openSettings()">
             <!-- JS -->
         </div>
-        <!-- 로그아웃 버튼 (작게) -->
         <button onclick="DB.logout()" class="mt-2 text-xs text-white/70 hover:text-white underline pointer-events-auto cursor-pointer">로그아웃</button>
     </div>
 
@@ -406,14 +401,12 @@
         // --- 0. 데이터베이스 설정 (Firebase) ---
         
         let firebaseConfig;
-        let appId = 'saeboms-pink-world'; // 기본 앱 ID
+        let appId = 'saeboms-pink-world';
 
-        // Gemini 미리보기 환경인지 확인
         if (typeof __firebase_config !== 'undefined') {
             firebaseConfig = JSON.parse(__firebase_config);
             if (typeof __app_id !== 'undefined') appId = __app_id;
         } else {
-            // 🔥 [깃허브 배포용] 새봄이의 파이어베이스 설정
             firebaseConfig = {
               apiKey: "AIzaSyCWxYsElTcy7X4b7J18IbZOHXSAVg9vIDY",
               authDomain: "diary-80a65.firebaseapp.com",
@@ -427,19 +420,15 @@
         let appInstance, auth, db, user;
         const googleProvider = new GoogleAuthProvider();
         
-        // 데이터 캐싱 (속도 향상용)
         const Cache = {
             data: {},
             isLoaded: false
         };
 
         const DB = {
-            // 초기화: 파이어베이스 연결 및 인증 리스너 설정
             init: async () => {
                 if (!firebaseConfig) {
                     Cache.isLoaded = true;
-                    // 설정이 없으면 로그인 화면을 숨기고 로컬 모드처럼 동작하게 할 수도 있지만,
-                    // 사용자에게 설정을 유도하기 위해 경고만 남김
                     document.getElementById('loading-text').innerText = "Firebase 설정이 필요해요!";
                     return;
                 }
@@ -449,25 +438,19 @@
                     auth = getAuth(appInstance);
                     db = getFirestore(appInstance);
 
-                    // 1. Gemini 미리보기 환경 전용: 자동 로그인
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                         await signInWithCustomToken(auth, __initial_auth_token);
                     } 
-                    // 2. 깃허브 배포 환경: 자동 로그인 시도 안 함 (사용자가 버튼 눌러야 함)
-                    // 다만, 이전에 로그인한 기록이 있으면 onAuthStateChanged가 자동으로 감지함!
 
-                    // 인증 상태 변화 감지
                     onAuthStateChanged(auth, async (u) => {
                         if (u) {
                             user = u;
                             console.log("로그인 성공:", user.uid);
-                            await DB.loadAllData(); // 데이터 불러오기
+                            await DB.loadAllData();
                             
-                            // 로딩 화면 제거 & 앱 시작
                             document.getElementById('loading-screen').style.opacity = '0'; 
                             setTimeout(()=>document.getElementById('loading-screen').remove(),700);
                         } else {
-                            // 로그아웃 상태면 로그인 버튼 보여주기
                             document.getElementById('loading-text').innerText = "로그인이 필요해요!";
                             document.getElementById('google-login-btn').classList.remove('hidden');
                         }
@@ -479,7 +462,6 @@
                 }
             },
 
-            // 구글 로그인 함수
             login: async () => {
                 try {
                     await signInWithPopup(auth, googleProvider);
@@ -489,7 +471,6 @@
                 }
             },
 
-            // 로그아웃 함수 (커스텀 모달)
             logout: () => {
                 const modal = document.createElement('div');
                 modal.className = 'custom-modal-overlay';
@@ -516,7 +497,6 @@
                 }
             },
 
-            // 모든 데이터 한 번에 불러오기
             loadAllData: async () => {
                 const collections = ['heart_memo', 'my_dday', 'polaroid_data', 'time_capsule', 'profile_data_v2', 'planner_diary_v2', 'planner_schedule', 'planner_yearly', 'planner_weekly_todo', 'memos', 'todos', 'imgs'];
                 
@@ -525,7 +505,6 @@
                     if (typeof __app_id !== 'undefined') {
                             docRef = doc(db, 'artifacts', appId, 'users', user.uid, col, 'data');
                     } else {
-                            // 개인 깃허브용 단순 경로
                             docRef = doc(db, 'users', user.uid, 'app_data', col);
                     }
                     
@@ -537,7 +516,6 @@
                 Cache.isLoaded = true;
             },
 
-            // 저장 (로컬 + 파이어베이스 동기화)
             save: async (key, data) => {
                 Cache.data[key] = data; 
                 if (db && user) {
@@ -555,7 +533,6 @@
                 }
             },
 
-            // 불러오기 (캐시에서 즉시 리턴)
             load: (key, defaultVal) => {
                 if (Cache.data[key] !== undefined) return Cache.data[key];
                 try {
@@ -566,7 +543,6 @@
             }
         };
 
-        // --- Utils 등 기존 로직 ---
         const Utils = {
             formatDate: () => new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }),
             formatTime: () => new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
@@ -594,7 +570,7 @@
             }
         }
 
-        // --- 2. 스카이 렌더러 (배경 그라데이션) ---
+        // --- 2. 스카이 렌더러 ---
         class SkyRenderer {
             constructor() {
                 this.cvs = document.getElementById('sky-canvas'); this.ctx = this.cvs.getContext('2d'); this.items = [];
@@ -609,13 +585,11 @@
             }
             loop() {
                 const g = this.ctx.createLinearGradient(0,0,0,this.h);
-                // [수정] 메인 배경 그라데이션 반전: 위(진한 핑크) -> 아래(연한 핑크)
-                g.addColorStop(0,'#ff9ebb'); // Top: 조금 진한 쿨톤 핑크
-                g.addColorStop(1,'#ffeaf4'); // Bottom: 아주 밝은 쿨톤 핑크
+                g.addColorStop(0,'#ff9ebb');
+                g.addColorStop(1,'#ffeaf4');
                 this.ctx.fillStyle = g; this.ctx.fillRect(0,0,this.w,this.h);
                 this.items.forEach(c => {
                     c.y -= c.v; 
-                    // FIX: 하트가 화면 위로 올라가면 위치를 다시 랜덤하게 섞어줍니다
                     if(c.y < -50) {
                         c.y = this.h + 50;
                         c.x = Math.random() * this.w;
@@ -647,7 +621,6 @@
 
         // --- 4. Widget Logics ---
         
-        // Heart Widget (메모장)
         const HeartWidget = {
             init: () => {
                 const memo = DB.load('heart_memo', ''); 
@@ -659,14 +632,12 @@
             }
         };
 
-        // Rabbit Pet
         const RabbitPet = {
             el: null, heart: null, isMoving: false,
             messages: ["새봄아 눈 깜빡여봐! 👀", "으쌰으쌰 스트레칭! 🙆‍♀️", "사랑해! 💖", "오늘 기분 어때? 🐰", "물 마셨어? 💧", "거북목 조심! 🐢", "웃어봐 스마일 ✨", "당 충전 고고? 🍭", "넌 최고야! 👍"],
             init: () => {
                 RabbitPet.el = document.getElementById('desktop-pet');
                 RabbitPet.heart = document.querySelector('.pet-heart');
-                // RabbitPet.moveLoop(); // 움직임 루프 제거
                 RabbitPet.talkLoop();
             },
             hop: () => {
@@ -691,11 +662,9 @@
             }
         };
 
-        // D-Day App
         const DDayApp = {
             data: {},
             init: () => {
-                // [수정] 기본 제목 변경: '건용이랑 사랑한지' -> '제목'
                 DDayApp.data = DB.load('my_dday', { date: '2022-10-01', name: '제목', icon1: '🤴', icon2: '👸' });
                 DDayApp.render();
             },
@@ -708,7 +677,6 @@
             save: () => { DDayApp.data.name = document.getElementById('dd-name').value; DDayApp.data.date = document.getElementById('dd-date').value; DDayApp.data.icon1 = document.getElementById('dd-icon1').value; DDayApp.data.icon2 = document.getElementById('dd-icon2').value; DB.save('my_dday', DDayApp.data); DDayApp.render(); document.querySelector('.custom-modal-overlay').remove(); }
         };
 
-        // Fortune App
         const FortuneApp = {
             fortunes: ["오늘은 뭘 해도 되는 날! 🎫", "길 가다 돈 줍는 행운?! 👀", "인생샷 건지는 날! 📸", "뜻밖의 선물 도착 🎁", "먹고 싶던 거 먹는 날 🍔", "피부가 꿀피부 ✨", "택배가 빨리 온다 📦", "대중교통 타이밍 굿 🚌", "자신감을 가져! 👑", "소확행이 찾아온다 🥰", "머리 스타일 굿 💇‍♀️", "맛있는 디저트 발견 🍰", "하늘을 봐봐 예뻐 ☁️", "좋아하는 노래 들어봐 🎧", "물 많이 마시기 💧", "스트레칭 쫙쫙 🧘‍♀️", "방 청소하면 운 UP 🧹", "일찍 자면 피부 미인 🌙", "새로운 취미 도전? 🎨", "친구에게 톡해봐 📱", "핑크템이 행운템 🎀", "비타민 챙겨 💊", "차 한 잔의 여유 ☕", "귀여운 고양이 봄 🐾", "지갑 사수! 💸", "우산 챙겨 ☔", "말 조심 🤫", "저장(Ctrl+S) 필수 💾", "무리 금지 🔋", "체함 주의 🥄", "발가락 찧음 주의 🦶", "지각 조심 ⏰", "배터리 충전 ⚡", "집콕이 최고 🏠"],
             init: () => {
@@ -719,12 +687,17 @@
             flip: (el) => { if(el.classList.contains('flipped')) return; const randomFortune = FortuneApp.fortunes[Math.floor(Math.random() * FortuneApp.fortunes.length)]; document.getElementById('fortune-text').innerText = randomFortune; el.classList.add('flipped'); }
         };
 
-        // Polaroid Widget (수정: 직접 이미지 변경 기능 복구)
+        // =====================================================
+        // ✅ [수정됨] Polaroid Widget - localStorage로 이미지 저장
+        // =====================================================
         const PolaroidApp = {
             data: { caption: '새봄이 땽', img: null },
             init: () => {
                 const saved = DB.load('polaroid_data', PolaroidApp.data);
                 PolaroidApp.data = { ...PolaroidApp.data, ...saved };
+                // 이미지는 용량이 커서 Firestore에 저장 안 되므로 localStorage에서 따로 불러오기
+                const localImg = localStorage.getItem('polaroid_img');
+                if (localImg) PolaroidApp.data.img = localImg;
                 PolaroidApp.render(); 
             },
             render: () => {
@@ -743,20 +716,26 @@
             refresh: () => PolaroidApp.render(),
             saveCaption: (val) => { 
                 PolaroidApp.data.caption = val; 
-                DB.save('polaroid_data', PolaroidApp.data); 
+                // caption 저장 시에도 img는 __local__ 마커로 저장
+                const dataToSave = { ...PolaroidApp.data, img: '__local__' };
+                DB.save('polaroid_data', dataToSave); 
             },
             updateImage: (input) => {
                 if (input.files && input.files[0]) {
                     Utils.readFile(input.files[0], (dataUrl) => {
                         PolaroidApp.data.img = dataUrl;
-                        DB.save('polaroid_data', PolaroidApp.data);
+                        // ✅ 이미지는 용량이 크니까 localStorage에 따로 저장 (Firestore 1MB 제한 우회)
+                        localStorage.setItem('polaroid_img', dataUrl);
+                        // ✅ caption 등 나머지 데이터만 Firestore에 저장 (img는 '__local__' 마커로)
+                        const dataToSave = { ...PolaroidApp.data, img: '__local__' };
+                        DB.save('polaroid_data', dataToSave);
                         PolaroidApp.render();
                     });
                 }
             }
         };
+        // =====================================================
 
-        // Time Capsule App
         const TimeCapsuleApp = {
             init: () => { TimeCapsuleApp.render(); },
             render: () => {
@@ -791,7 +770,6 @@
             reset: () => { if(confirm('새로 만들까요?')) { DB.save('time_capsule', null); TimeCapsuleApp.render(); } }
         };
 
-        // --- Editable Profile App (수정됨: 흰색 배경) ---
         const ProfileApp = {
             data: {
                 name: '새봄', job: 'Web Designer', birth: '1996.11.04', mbti: 'ISFJ', live: 'Seoul', bf: ' ', fav: ' ', img: 'https://api.iconify.design/noto:rabbit-face.svg'
@@ -802,11 +780,9 @@
                 const el = document.getElementById('app-profile');
                 if(!el) return;
                 
-                // 배경: 다시 흰색으로!
                 el.innerHTML = `
                     <div class="flex flex-col items-center p-8 h-full overflow-y-auto custom-scrollbar bg-white">
                         
-                        <!-- 사진 변경 -->
                         <div class="relative w-40 h-40 mb-6 group cursor-pointer" onclick="document.getElementById('profile-file-input').click()">
                             <div class="w-full h-full rounded-full overflow-hidden border-[5px] border-pink-100 shadow-lg bg-pink-50 transition-transform transform group-hover:scale-105">
                                 <img id="profile-img-display" src="${ProfileApp.data.img}" class="w-full h-full object-cover">
@@ -817,11 +793,9 @@
                         </div>
                         <input type="file" id="profile-file-input" class="hidden" accept="image/*" onchange="ProfileApp.updateImage(this)">
 
-                        <!-- 이름 & 직업 (수정 가능) -->
                         <h1 class="text-3xl font-bold text-gray-800 mb-2 font-sans outline-none border-b border-transparent focus:border-pink-200" contenteditable="true" oninput="ProfileApp.save('name', this.innerText)">${ProfileApp.data.name}</h1>
                         <div class="text-pink-500 font-bold mb-8 uppercase tracking-widest bg-pink-50 px-3 py-1 rounded-full text-sm outline-none focus:ring-2 focus:ring-pink-300" contenteditable="true" oninput="ProfileApp.save('job', this.innerText)">${ProfileApp.data.job}</div>
 
-                        <!-- 정보 리스트 (수정 가능) -->
                         <div class="w-full space-y-3 px-4">
                             ${ProfileApp.renderItem('BIRTH', 'birth')}
                             ${ProfileApp.renderItem('MBTI', 'mbti')}
@@ -855,7 +829,6 @@
             }
         };
 
-        // --- Diary Viewer ---
         const DiaryViewer = {
             date: new Date(), init: () => { DiaryViewer.render(); }, formatYMD: (y,m,d) => `${y}-${m}-${d}`, changeDate: (y, m) => { DiaryViewer.date.setFullYear(y); DiaryViewer.date.setMonth(m-1); DiaryViewer.render(); },
             render: () => {
@@ -863,13 +836,11 @@
                 const y = DiaryViewer.date.getFullYear(), m = DiaryViewer.date.getMonth();
                 const diaries = DB.load('planner_diary_v2', {});
                 
-                // [NEW] 무드 통계 계산
                 const moodCounts = { '🥰': 0, '😐': 0, '😭': 0, '😡': 0, '🥳': 0 };
                 let totalDiaries = 0;
                 const currentPrefix = `${y}-${m+1}-`;
 
                 Object.keys(diaries).forEach(dateKey => {
-                    // 해당 년월의 데이터인지 확인 (예: 2025-12-XX)
                     const [dy, dm, dd] = dateKey.split('-').map(Number);
                     if (dy === y && dm === m + 1) {
                         const entry = diaries[dateKey];
@@ -891,7 +862,6 @@
                 }
                 h += `</div>`;
 
-                // [NEW] 무드 그래프 추가 (슬림 버전)
                 h += `<div class="p-2 bg-white/80 border-t border-pink-100">
                         <h3 class="text-xs font-bold text-pink-500 mb-1 font-sans">📊 이번 달 내 기분은?</h3>
                         <div class="space-y-1">`;
@@ -908,7 +878,7 @@
                             <span class="w-6 text-gray-400 text-right font-bold">${count}</span>
                           </div>`;
                 }
-                h += `</div></div></div>`; // 닫는 태그들
+                h += `</div></div></div>`;
                 
                 el.innerHTML = h;
             },
@@ -984,7 +954,6 @@
             saveDiary: (dk) => { const txt=document.getElementById('diary-text').value; Planner.currentDiary.text=txt; const ds=DB.load('planner_diary_v2',{}); ds[dk]=Planner.currentDiary; DB.save('planner_diary_v2',ds); alert('일기가 저장되었어! 💖'); Planner.render(); Planner.closePopup('date-popup'); }
         };
 
-        // --- 기타 앱들 ---
         const Apps = {
             notepad: { t: '✏️ 메모장', w: 400, h: 500, c: `<div id="app-notepad" class="h-full flex flex-col bg-pink-50/30"></div>`, run: () => Apps.notepad.run() },
             planner: { t: '📅 다이어리', w: 900, h: 700, c: `<div id="app-planner" class="h-full"></div>`, run: () => Planner.init() },
@@ -1050,4 +1019,3 @@
     </script>
 </body>
 </html>
-
